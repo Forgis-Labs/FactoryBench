@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factorybench"
+version = "0.0.2"
+description = "Loader, evaluator, and CLI for the FactoryBench test split."
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Forgis" }]
+dependencies = [
+    "click>=8.1",
+    "huggingface_hub>=0.20",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.43"]
+anthropic = ["anthropic>=0.40"]
+all = ["openai>=1.43", "anthropic>=0.40"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+factorybench = "factorybench.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["factorybench*"]
