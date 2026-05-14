@@ -165,8 +165,10 @@ def list_templates_cmd(level: str, split: str):
 @click.option("--judge-cache-only", is_flag=True, help="Refuse new judge API calls; rely on the on-disk cache.")
 @click.option("--concurrency", type=int, default=1, show_default=True, help="Parallel candidate-model calls (thread pool).")
 @click.option("--resume", "resume_path", type=click.Path(path_type=Path, exists=True), default=None, help="Resume from a prior Result JSON; items already scored are reused.")
+@click.option("--dry-run", is_flag=True, help="Print a cost preview and exit without calling any model.")
+@click.option("-y", "--yes", "assume_yes", is_flag=True, help="Skip the cost confirmation prompt (CI / scripted runs).")
 @click.option("--no-progress", is_flag=True, help="Disable the per-item progress bar.")
-def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, judge_cache_only, concurrency, resume_path, no_progress):
+def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, judge_cache_only, concurrency, resume_path, dry_run, assume_yes, no_progress):
     """Run a model over the test split and write a Result JSON."""
     if import_spec:
         _import_user_module(import_spec)
@@ -175,6 +177,16 @@ def cmd_evaluate(model, level, split, max_items, template, dataset_version, outp
     if concurrency < 1:
         raise click.BadParameter("--concurrency must be >= 1")
 
+    # Cost preview / gating. Skip when only re-aggregating from cache (no spend).
+    estimated_cost: float | None = None
+    if not judge_cache_only:
+        proceed, estimated_cost = _cost_gate(
+            model, level, split, max_items, panel,
+            dry_run=dry_run, assume_yes=assume_yes,
+        )
+        if not proceed:
+            return
+
     try:
         return _do_evaluate(
             model, level, split, max_items, template, dataset_version, output,
@@ -182,6 +194,37 @@ def cmd_evaluate(model, level, split, max_items, template, dataset_version, outp
         )
     except (KeyError, NotImplementedError, ImportError, RuntimeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
+
+
+def _cost_gate(model, level, split, max_items, panel, *, dry_run, assume_yes) -> tuple[bool, float | None]:
+    """Print a cost preview; possibly prompt for confirmation.
+
+    Returns ``(should_proceed, estimated_total_cost)``. ``estimated_total_cost`` is
+    ``None`` when estimation failed.
+    """
+    from .cost import estimate_cost
+
+    try:
+        est = estimate_cost(model=model, level=level, split=split, max_items=max_items, judges=panel)
+    except Exception as exc:
+        # Cost estimation must never block a run on its own; if it fails, warn and proceed.
+        click.echo(f"warning: cost estimate failed ({type(exc).__name__}: {exc}); skipping preview", err=True)
+        return True, None
+
+    if dry_run:
+        click.echo(est.format())
+        click.echo("\n--dry-run: not calling any model. Exiting.")
+        return False, est.total_cost
+
+    needs_prompt = (est.n_l4_items > 0) or (est.total_cost >= 1.0)
+    if not needs_prompt or assume_yes:
+        return True, est.total_cost
+
+    click.echo(est.format())
+    if not click.confirm("\nContinue?", default=False):
+        click.echo("aborted.")
+        return False, est.total_cost
+    return True, est.total_cost
 
 
 def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel, *, concurrency=1, resume_path=None):
@@ -385,6 +428,39 @@ def cmd_score(predictions, level, split, dataset_version, output, model_name, ju
         click.echo(f"  judges              : {', '.join(result.judges)}")
         click.echo(f"  judge mode          : {result.judge_mode()}")
         click.echo(f"  fleiss kappa (L4)   : {_fmt(result.fleiss_kappa())}")
+
+
+# -- cost -------------------------------------------------------------------- #
+
+@cli.command("cost")
+@click.option("--model", required=True, help="Model spec for the candidate (gpt-5.1, claude-sonnet-4.6, mock, ...).")
+@click.option("--level", default="all", show_default=True, help="L1 | L2 | L3 | L4 | all")
+@click.option("--split", default="test", show_default=True)
+@click.option("--max-items", type=int, default=None, help="Cap items per level.")
+@click.option("--judges", default=None, help="L4 judge ensemble. 'paper-default' or a comma-separated list.")
+@click.option("--format", "fmt", type=click.Choice(["text", "json"], case_sensitive=False), default="text", show_default=True)
+def cmd_cost(model, level, split, max_items, judges, fmt):
+    """Estimate cost (and wall time) of an evaluate call. No API calls made."""
+    from .cost import estimate_cost
+
+    panel = None
+    if judges is not None:
+        from .judges import parse_judges_flag
+        try:
+            panel = parse_judges_flag(judges)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+        # Cost preview only -- skip credential precheck so it works offline.
+
+    try:
+        est = estimate_cost(model=model, level=level, split=split, max_items=max_items, judges=panel)
+    except (KeyError, NotImplementedError, RuntimeError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if fmt == "json":
+        click.echo(json.dumps(est.to_dict(), indent=2))
+    else:
+        click.echo(est.format())
 
 
 # -- compare ----------------------------------------------------------------- #

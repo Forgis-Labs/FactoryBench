@@ -170,6 +170,44 @@ result = fb.evaluate(
 )
 ```
 
+## Cost preview
+
+Before kicking off a paid run, get an order-of-magnitude estimate:
+
+```bash
+# Standalone preview (no API calls).
+factorybench cost --model claude-sonnet-4.6 --level L4 --judges paper-default
+
+# evaluate --dry-run: same preview, exits 0 without running.
+factorybench evaluate --model claude-sonnet-4.6 --level L4 \
+    --judges paper-default --dry-run
+
+# Any L4 run (or run with estimated total > $1) auto-prompts. Skip with --yes
+# in CI / scripted runs.
+factorybench evaluate --model claude-sonnet-4.6 --level L4 --judges paper-default
+# > Continue? [y/N]:
+
+factorybench evaluate --model claude-sonnet-4.6 --level L4 --judges paper-default --yes
+```
+
+Python API:
+
+```python
+from factorybench import estimate_cost, set_price
+
+# Override stale or missing prices ($/M tokens).
+set_price("my-internal-model", input_per_m=0.5, output_per_m=2.0)
+
+est = estimate_cost(
+    model="claude-sonnet-4.6",
+    level="L4",
+    judges="paper-default",
+    max_items=100,
+)
+print(est.format())
+est.to_dict()
+```
+
 ## Comparing models
 
 After running several models on the same split, drop a model x level table into
@@ -204,8 +242,9 @@ factorybench compare m0.json m1.json --name gpt-5.1 --name claude-sonnet-4.6
 
 ## What's intentionally missing
 
-- **Leaderboard `submit`** subcommand.
-- `--dry-run` cost preview.
+- **Leaderboard `submit`** subcommand (needs a backend).
+- Auto-fetched price table; the static snapshot is updated by hand. Use
+  `set_price()` or the `FB_PRICES` env var to override.
 - Prompt caching on the Anthropic adapter -- each FactoryBench item has a unique
   time-series body, and the shared prefix per level (description + acronym mapping)
   is well below the 2K / 4K minimum cacheable prefix on Sonnet / Opus. Adding
