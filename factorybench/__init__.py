@@ -8,11 +8,14 @@ from .score import score_item
 from .registry import register_model, get_model, list_models
 from .result import Result
 from .evaluate import evaluate
+from .compare import Comparison, compare
 
 __all__ = [
     "AnswerFormat",
+    "Comparison",
     "Item",
     "Result",
+    "compare",
     "evaluate",
     "get_model",
     "list_models",
@@ -23,4 +26,4 @@ __all__ = [
     "score_item",
 ]
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"

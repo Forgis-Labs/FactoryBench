@@ -170,6 +170,38 @@ result = fb.evaluate(
 )
 ```
 
+## Comparing models
+
+After running several models on the same split, drop a model x level table into
+your paper:
+
+```python
+from factorybench import evaluate, compare
+
+results = {
+    "gpt-5.1":            evaluate(model="gpt-5.1",           split="mini"),
+    "claude-sonnet-4.6":  evaluate(model="claude-sonnet-4.6", split="mini"),
+    "my-model":           evaluate(model="my-model",          split="mini"),
+}
+comp = compare(results)
+print(comp.to_markdown())                # paste into a draft
+print(comp.to_latex(booktabs=True))      # paste into LaTeX
+comp.to_dataframe()                      # long-form pandas
+```
+
+Best-per-row is bolded automatically (`bold_best=False` to disable). Absent or
+unscored levels render as `--`. `compare()` also accepts a dict of
+``model_name -> path-to-result.json`` (loaded for you), or just an iterable of
+paths (column names come from file stems).
+
+From the CLI:
+
+```bash
+factorybench compare results/m0.json results/m1.json results/m2.json
+factorybench compare results/*.json --format latex --output table.tex
+factorybench compare m0.json m1.json --name gpt-5.1 --name claude-sonnet-4.6
+```
+
 ## What's intentionally missing
 
 - **Leaderboard `submit`** subcommand.
@@ -178,4 +210,3 @@ result = fb.evaluate(
   time-series body, and the shared prefix per level (description + acronym mapping)
   is well below the 2K / 4K minimum cacheable prefix on Sonnet / Opus. Adding
   `cache_control` here would write entries that are never read.
-- `compare()` rendering helper for side-by-side model results.

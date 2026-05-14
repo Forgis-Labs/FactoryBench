@@ -387,6 +387,58 @@ def cmd_score(predictions, level, split, dataset_version, output, model_name, ju
         click.echo(f"  fleiss kappa (L4)   : {_fmt(result.fleiss_kappa())}")
 
 
+# -- compare ----------------------------------------------------------------- #
+
+@cli.command("compare")
+@click.argument("runs", nargs=-1, required=True, type=click.Path(path_type=Path, exists=True))
+@click.option(
+    "--format", "fmt",
+    type=click.Choice(["markdown", "latex", "json"], case_sensitive=False),
+    default="markdown",
+    show_default=True,
+    help="Output format.",
+)
+@click.option("--decimals", type=int, default=4, show_default=True, help="Cells are formatted with this many decimal places.")
+@click.option("--no-bold", is_flag=True, help="Disable bolding the best score in each row.")
+@click.option("--name", "names", multiple=True, help="Override model column name. Pass once per RUNS argument in the same order.")
+@click.option("--output", type=click.Path(path_type=Path), default=None, help="Write to a file instead of stdout.")
+def cmd_compare(runs, fmt, decimals, no_bold, names, output):
+    """Render a model x level comparison from saved Result JSON files."""
+    from .compare import compare as _compare
+
+    if names and len(names) != len(runs):
+        raise click.BadParameter(
+            f"got {len(names)} --name values for {len(runs)} runs; pass one --name per run or none at all"
+        )
+
+    if names:
+        results = {label: path for label, path in zip(names, runs)}
+    else:
+        # Default to the file stem; on collision, fall back to the saved model_name.
+        results = {}
+        for path in runs:
+            label = path.stem
+            if label in results:
+                label = f"{label}@{len(results)}"
+            results[label] = path
+
+    comp = _compare(results)
+
+    if fmt == "markdown":
+        text = comp.to_markdown(decimals=decimals, bold_best=not no_bold)
+    elif fmt == "latex":
+        text = comp.to_latex(decimals=decimals, bold_best=not no_bold)
+    else:
+        text = comp.to_json(decimals=decimals)
+
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text + "\n", encoding="utf-8")
+        click.echo(f"wrote -> {output}")
+    else:
+        click.echo(text)
+
+
 # --------------------------------------------------------------------------- #
 # small utilities
 # --------------------------------------------------------------------------- #
