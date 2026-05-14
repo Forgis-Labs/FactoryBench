@@ -13,7 +13,9 @@ an LLM-as-judge ensemble and is intentionally out of scope here.
 pip install -e .                       # base install (mock model only)
 pip install -e ".[openai]"             # adds OpenAI / DeepSeek (gpt-*, deepseek-*)
 pip install -e ".[anthropic]"          # adds Anthropic (claude-*)
+pip install -e ".[tokenizers]"         # exact pre-run token counts (tiktoken)
 pip install -e ".[all]"                # everything
+pip install -e ".[dev]"                # pytest for running the test suite
 ```
 
 Python 3.10+.
@@ -52,6 +54,8 @@ factorybench info                                            # version, dataset 
 factorybench info --json                                     # machine-readable (paste into bug reports)
 factorybench cache stats                                     # judge cache size + age
 factorybench cache clear -y                                  # wipe the judge cache
+factorybench prices list                                     # bundled price table + version stamp
+factorybench prices source                                   # show where prices are loaded from
 factorybench list models                                     # registered + built-in
 factorybench list levels                                     # item counts per level
 factorybench list templates --level L2                       # templates within a level
@@ -217,6 +221,18 @@ print(est.format())
 est.to_dict()
 ```
 
+**Token-count precision.** With ``pip install "factorybench[tokenizers]"``
+the preview uses real `tiktoken` counts (exact for OpenAI, model-appropriate
+encoder when known, `cl100k_base` otherwise). Without it, the heuristic
+`len(text) / 4` rule is used. `CostEstimate.precise_tokens` and the CLI
+output label both indicate which mode is active. Output tokens are estimated
+from a per-answer-format table (still heuristic).
+
+**Bundled price table.** Ships as `factorybench/prices.json` with a version
+stamp. Inspect with `factorybench prices list`. Three override paths, in
+precedence order: `FB_PRICES` env var > `~/.config/factorybench/prices.json` >
+`set_price()` runtime calls > the bundled JSON.
+
 ### Actual cost after the run
 
 The built-in OpenAI / Anthropic adapters report each call's real
@@ -278,8 +294,10 @@ factorybench compare m0.json m1.json --name gpt-5.1 --name claude-sonnet-4.6
 ## What's intentionally missing
 
 - **Leaderboard `submit`** subcommand (needs a backend).
-- Auto-fetched price table; the static snapshot is updated by hand. Use
-  `set_price()` or the `FB_PRICES` env var to override.
+- Auto-fetched price table; the bundled snapshot is updated by hand. Use
+  `set_price()`, `FB_PRICES`, or drop a file at
+  `~/.config/factorybench/prices.json` to override.
+- Heatmap renderer on `Comparison` -- markdown/latex/json cover the paper use case.
 - Prompt caching on the Anthropic adapter -- each FactoryBench item has a unique
   time-series body, and the shared prefix per level (description + acronym mapping)
   is well below the 2K / 4K minimum cacheable prefix on Sonnet / Opus. Adding

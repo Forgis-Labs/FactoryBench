@@ -565,6 +565,53 @@ def cmd_score(predictions, level, split, dataset_version, output, model_name, ju
         click.echo(f"  fleiss kappa (L4)   : {_fmt(result.fleiss_kappa())}")
 
 
+# -- prices ------------------------------------------------------------------ #
+
+@cli.group("prices")
+def cmd_prices():
+    """Inspect or refresh the bundled per-model price table."""
+
+
+@cmd_prices.command("list")
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable JSON.")
+def cmd_prices_list(as_json):
+    """Show the active price table + version stamp + source."""
+    from .cost import DEFAULT_PRICE_PER_M_TOKENS, PRICES_METADATA, PRICES_PER_M_TOKENS
+
+    if as_json:
+        payload = {
+            "metadata": PRICES_METADATA,
+            "default_rate": {
+                "input_per_m": DEFAULT_PRICE_PER_M_TOKENS[0],
+                "output_per_m": DEFAULT_PRICE_PER_M_TOKENS[1],
+            },
+            "models": {m: {"input_per_m": p[0], "output_per_m": p[1]}
+                       for m, p in PRICES_PER_M_TOKENS.items()},
+        }
+        click.echo(json.dumps(payload, indent=2))
+        return
+
+    meta = PRICES_METADATA
+    click.echo(f"source         : {meta.get('source')}")
+    click.echo(f"version        : {meta.get('version')}")
+    click.echo(f"updated_at     : {meta.get('updated_at')}")
+    click.echo(f"description    : {meta.get('source_description', '(none)')}")
+    click.echo(f"default rate   : {DEFAULT_PRICE_PER_M_TOKENS[0]:.2f} / {DEFAULT_PRICE_PER_M_TOKENS[1]:.2f} $/M (input / output)")
+    click.echo("")
+    click.echo("model rates ($/M input  /  $/M output):")
+    for model, (inp, out) in sorted(PRICES_PER_M_TOKENS.items()):
+        click.echo(f"  {model:<22s}: {inp:>5.2f} / {out:>5.2f}")
+
+
+@cmd_prices.command("source")
+def cmd_prices_source():
+    """Show the filesystem paths the price table was loaded from."""
+    from .cost import BUNDLED_PRICES_PATH, USER_PRICES_PATH
+    click.echo(f"bundled snapshot       : {BUNDLED_PRICES_PATH}")
+    click.echo(f"user override (loaded if present): {USER_PRICES_PATH}")
+    click.echo(f"env override           : FB_PRICES=model:input/output,...")
+
+
 # -- cost -------------------------------------------------------------------- #
 
 @cli.command("cost")

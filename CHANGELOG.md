@@ -3,6 +3,17 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.9
+
+- Exact pre-run token counting via the new `factorybench[tokenizers]` extra
+  (uses `tiktoken`; falls back to the `len(text)/4` heuristic when not
+  installed). `CostEstimate.precise_tokens` exposes which mode was used.
+- Price table extracted to `factorybench/prices.json` with a version stamp.
+  User overrides at `~/.config/factorybench/prices.json` are layered on top
+  at import time. New `factorybench prices list | source` CLI group.
+- Automated test suite (106 tests, zero network calls). Covers parse, score,
+  result, judges, cost, compare, cache, data, tokens, evaluate helpers.
+
 ## 0.0.8
 
 - `factorybench info` overhaul: pinned dataset revision (HF commit SHA),

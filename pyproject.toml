@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factorybench"
-version = "0.0.8"
+version = "0.0.9"
 description = "Loader, evaluator, and CLI for the FactoryBench test split."
 requires-python = ">=3.10"
 readme = "README.md"
@@ -21,7 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.43"]
 anthropic = ["anthropic>=0.40"]
-all = ["openai>=1.43", "anthropic>=0.40"]
+tokenizers = ["tiktoken>=0.7"]
+all = ["openai>=1.43", "anthropic>=0.40", "tiktoken>=0.7"]
 dev = ["pytest>=7.4"]
 
 [project.scripts]
@@ -30,3 +31,6 @@ factorybench = "factorybench.cli:cli"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["factorybench*"]
+
+[tool.setuptools.package-data]
+factorybench = ["prices.json"]

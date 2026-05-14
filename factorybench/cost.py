@@ -1,19 +1,27 @@
 """Cost preview for ``factorybench evaluate``.
 
-Token counts use the ``len(text) / 4`` heuristic (+/-25%). Per-model prices
-are a static snapshot table; override at runtime with :func:`set_price`.
+Token counts are exact when ``tiktoken`` is installed (via the
+``[tokenizers]`` extra), and fall back to a ``len(text) / 4`` heuristic
+otherwise. The bundled per-model price table (``factorybench/prices.json``)
+is a manual snapshot with a version stamp; override at runtime with
+:func:`set_price`, drop a file at ``~/.config/factorybench/prices.json``, or
+set the ``FB_PRICES`` env var.
 """
 from __future__ import annotations
 
+import json
 import math
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
+from pathlib import Path
 from typing import Iterable
 
 from .data import load_split
 from .judges import PAPER_DEFAULT_JUDGES, JudgePanel, RUBRIC_PROMPT, parse_judges_flag
 from .prompt import render_prompt
+from .tokens import count_tokens as precise_count_tokens, has_tiktoken, is_precise
 from .types import AnswerFormat, Item
 
 
@@ -21,9 +29,8 @@ from .types import AnswerFormat, Item
 # Token estimation
 # --------------------------------------------------------------------------- #
 
-_HEURISTIC_CHARS_PER_TOKEN = 4
-
-# Output token estimates per item, by answer format.
+# Output token estimates per item, by answer format. L4 reference answers are
+# multi-sentence; the rest are very short.
 _OUTPUT_TOKEN_ESTIMATE = {
     AnswerFormat.SINGLE_LETTER_MCQ:   2,
     AnswerFormat.FOUR_LETTER_TF:      4,
@@ -35,15 +42,19 @@ _OUTPUT_TOKEN_ESTIMATE = {
     AnswerFormat.FREE_FORM:         150,
 }
 
-# Each judge call outputs exactly one of "0", "0.5", "1".
+# Each judge call outputs exactly one of "0", "0.5", "1" so its output is tiny.
 _JUDGE_OUTPUT_TOKENS = 3
 
 
 def estimate_tokens(text: str | None, model: str | None = None) -> int:
-    """Heuristic token count: ``len(text) / 4``. Model argument is ignored."""
-    if not text:
-        return 0
-    return max(1, len(text) // _HEURISTIC_CHARS_PER_TOKEN)
+    """Token count for cost previews.
+
+    Uses :func:`factorybench.tokens.count_tokens`, which is exact when
+    ``tiktoken`` is installed (via ``pip install "factorybench[tokenizers]"``)
+    and falls back to a ``len(text) / 4`` heuristic otherwise. Pass ``model``
+    to pick the most accurate encoder available.
+    """
+    return precise_count_tokens(text, model=model)
 
 
 def estimate_output_tokens(item: Item) -> int:
@@ -51,34 +62,92 @@ def estimate_output_tokens(item: Item) -> int:
 
 
 # --------------------------------------------------------------------------- #
-# Price table ($/1M tokens). Static snapshot -- override via set_price.
+# Price table ($/1M tokens). Snapshot -- override via set_price or FB_PRICES.
 # --------------------------------------------------------------------------- #
 
 # Each entry: (input $/M tokens, output $/M tokens).
-PRICES_PER_M_TOKENS: dict[str, tuple[float, float]] = {
-    # OpenAI
-    "gpt-4o":               (2.50,  10.00),
-    "gpt-4o-mini":          (0.15,   0.60),
-    "gpt-4.1":              (2.00,   8.00),
-    "gpt-4.1-mini":         (0.40,   1.60),
-    "gpt-4.1-nano":         (0.10,   0.40),
-    "gpt-5":                (5.00,  40.00),
-    "gpt-5.1":              (5.00,  40.00),
-    # Anthropic
-    "claude-opus-4":        (15.00,  75.00),
-    "claude-opus-4-7":      (15.00,  75.00),
-    "claude-sonnet-4":       (3.00,  15.00),
-    "claude-sonnet-4-6":     (3.00,  15.00),
-    "claude-sonnet-4.6":     (3.00,  15.00),
-    "claude-haiku-4":        (0.80,   4.00),
-    "claude-haiku-4-5":      (0.80,   4.00),
-    # DeepSeek
-    "deepseek-chat":         (0.27,   1.10),
-    "deepseek-v3":           (0.27,   1.10),
-    "deepseek-v3.2":         (0.27,   1.10),
-}
+# Bundled price snapshot lives at <package>/prices.json (with a version stamp).
+# User overrides at ~/.config/factorybench/prices.json take precedence.
+BUNDLED_PRICES_PATH = Path(__file__).parent / "prices.json"
+USER_PRICES_PATH = Path.home() / ".config" / "factorybench" / "prices.json"
 
+# Populated by _load_bundled_prices() at import time.
+PRICES_PER_M_TOKENS: dict[str, tuple[float, float]] = {}
 DEFAULT_PRICE_PER_M_TOKENS: tuple[float, float] = (5.00, 15.00)
+# Where the *currently active* prices came from (set by _load_bundled_prices).
+PRICES_METADATA: dict = {}
+
+
+def _load_prices_file(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _apply_prices_payload(payload: dict, *, source: str) -> None:
+    """Replace PRICES_PER_M_TOKENS with the table in ``payload`` (one source at a time)."""
+    global DEFAULT_PRICE_PER_M_TOKENS, PRICES_METADATA
+    PRICES_PER_M_TOKENS.clear()
+    for model, rates in (payload.get("models") or {}).items():
+        try:
+            PRICES_PER_M_TOKENS[model] = (
+                float(rates["input_per_m"]),
+                float(rates["output_per_m"]),
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    default = payload.get("default_rate")
+    if isinstance(default, dict):
+        try:
+            DEFAULT_PRICE_PER_M_TOKENS = (
+                float(default["input_per_m"]),
+                float(default["output_per_m"]),
+            )
+        except (KeyError, TypeError, ValueError):
+            pass
+    PRICES_METADATA = {
+        "source": source,
+        "version": payload.get("version"),
+        "updated_at": payload.get("updated_at"),
+        "source_description": payload.get("source"),
+    }
+
+
+def _load_bundled_prices() -> None:
+    """Load the bundled snapshot, then overlay any user override on top."""
+    bundled = _load_prices_file(BUNDLED_PRICES_PATH)
+    if bundled is None:
+        # Last-resort hardcoded fallback so the module still imports.
+        bundled = {"version": "fallback", "models": {}, "default_rate": {"input_per_m": 5.0, "output_per_m": 15.0}}
+    _apply_prices_payload(bundled, source=str(BUNDLED_PRICES_PATH))
+
+    user = _load_prices_file(USER_PRICES_PATH)
+    if user is not None:
+        # Merge: user keys override bundled; default_rate replaced only if user provides it.
+        merged_models = dict(PRICES_PER_M_TOKENS)
+        for model, rates in (user.get("models") or {}).items():
+            try:
+                merged_models[model] = (
+                    float(rates["input_per_m"]),
+                    float(rates["output_per_m"]),
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+        payload = {
+            "version": user.get("version") or PRICES_METADATA.get("version"),
+            "updated_at": user.get("updated_at") or PRICES_METADATA.get("updated_at"),
+            "source": "bundled + user override",
+            "models": {m: {"input_per_m": p[0], "output_per_m": p[1]} for m, p in merged_models.items()},
+            "default_rate": user.get("default_rate") or {
+                "input_per_m": DEFAULT_PRICE_PER_M_TOKENS[0],
+                "output_per_m": DEFAULT_PRICE_PER_M_TOKENS[1],
+            },
+        }
+        _apply_prices_payload(payload, source=f"{BUNDLED_PRICES_PATH} + {USER_PRICES_PATH}")
+
+
+_load_bundled_prices()
 
 
 def set_price(model: str, *, input_per_m: float, output_per_m: float) -> None:
@@ -86,10 +155,35 @@ def set_price(model: str, *, input_per_m: float, output_per_m: float) -> None:
     PRICES_PER_M_TOKENS[model] = (float(input_per_m), float(output_per_m))
 
 
+def _load_env_prices() -> None:
+    """Read ``FB_PRICES`` from the environment.
+
+    Format: comma-separated entries ``model:input_per_m/output_per_m``.
+    Example: ``FB_PRICES="gpt-5.1:6.0/18.0,my-model:0.5/2.0"``.
+    """
+    raw = os.environ.get("FB_PRICES")
+    if not raw:
+        return
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry or ":" not in entry:
+            continue
+        model, rates = entry.split(":", 1)
+        try:
+            inp, out = rates.split("/", 1)
+            set_price(model.strip(), input_per_m=float(inp), output_per_m=float(out))
+        except ValueError:
+            continue
+
+
+_load_env_prices()
+
+
 def _price_of(model: str) -> tuple[float, float]:
     """Look up (input_per_m, output_per_m) for a model with prefix fallback."""
     if model in PRICES_PER_M_TOKENS:
         return PRICES_PER_M_TOKENS[model]
+    # Try a normalized variant (dots -> dashes).
     norm = model.replace(".", "-")
     if norm in PRICES_PER_M_TOKENS:
         return PRICES_PER_M_TOKENS[norm]
@@ -139,12 +233,13 @@ class CostEstimate:
     total_cost: float = 0.0
     estimated_wall_time: timedelta = field(default_factory=lambda: timedelta(0))
     notes: list[str] = field(default_factory=list)
-    # Always False in this version; set to True when tiktoken is wired in.
+    # True when token counts came from a real tokenizer (tiktoken) rather than
+    # the len(text) / 4 heuristic.
     precise_tokens: bool = False
 
     def format(self) -> str:
         """Return a human-readable preview string."""
-        precision_tag = "heuristic tokens (+/-25%)"
+        precision_tag = "exact tokens (tiktoken)" if self.precise_tokens else "heuristic tokens (+/-25%)"
         lines = [
             f"This will evaluate {self.model} on {self.n_items} item(s).",
             f"Estimated cost ({precision_tag}):",
@@ -197,10 +292,15 @@ def estimate_cost(
     max_items: int | None = None,
     judges: JudgePanel | str | list[str] | None = None,
 ) -> CostEstimate:
-    """Estimate dollar cost + wall time of an :func:`evaluate` call."""
+    """Estimate dollar cost + wall time of an :func:`evaluate` call.
+
+    ``judges`` may be a :class:`JudgePanel`, a CLI shorthand string, or a list
+    of judge specs.
+    """
     panel = _coerce_panel(judges)
     have_judges = panel is not None
 
+    # Mirror evaluate()'s level-resolution rules.
     if isinstance(level, str) and level.strip().lower() == "all":
         levels = [1, 2, 3, 4] if have_judges else [1, 2, 3]
     else:
@@ -213,17 +313,14 @@ def estimate_cost(
 
 def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | None) -> CostEstimate:
     notes: list[str] = []
-    notes.append(
-        "token counts are heuristic; install tiktoken for exact counts "
-        "(pip install \"factorybench[tokenizers]\")"
-    )
 
+    # Candidate-model tokens.
     in_tokens = 0
     out_tokens = 0
     n_l4 = 0
     for it in items:
         prompt = render_prompt(it)
-        in_tokens += estimate_tokens(prompt, model=model)
+        in_tokens += precise_count_tokens(prompt, model=model)
         out_tokens += estimate_output_tokens(it)
         if it.answer_format == AnswerFormat.FREE_FORM:
             n_l4 += 1
@@ -236,9 +333,13 @@ def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | No
         )
     model_cost = _dollars(in_tokens, out_tokens, _price_of(model))
 
+    # Judge tokens (only on L4 items).
     judges_breakdown: list[JudgeCostBreakdown] = []
     judge_total = 0.0
+    precise = has_tiktoken()
     if panel is not None and n_l4 > 0:
+        # Build the per-item judge prompt without a real prediction; use the
+        # reference answer as a stand-in for prediction length.
         for spec in panel.judge_specs:
             per_judge_in = 0
             per_judge_out = 0
@@ -255,7 +356,7 @@ def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | No
                     ),
                     prediction=stand_in,
                 )
-                per_judge_in += estimate_tokens(rendered, model=spec)
+                per_judge_in += precise_count_tokens(rendered, model=spec)
                 per_judge_out += _JUDGE_OUTPUT_TOKENS
 
             priced = _is_priced(spec)
@@ -269,8 +370,17 @@ def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | No
             ))
             judge_total += cost
             if not priced:
-                notes.append(f"no price entry for judge {spec!r}; using default rate")
+                notes.append(
+                    f"no price entry for judge {spec!r}; using default rate"
+                )
 
+    if not precise:
+        notes.append(
+            "token counts are heuristic; install tiktoken for exact counts "
+            "(pip install \"factorybench[tokenizers]\")"
+        )
+
+    # Time estimate (sequential baseline).
     candidate_seconds = len(items) * _SECONDS_PER_CANDIDATE_CALL
     judge_seconds = n_l4 * len(judges_breakdown) * _SECONDS_PER_JUDGE_CALL
     wall = timedelta(seconds=candidate_seconds + judge_seconds)
@@ -288,7 +398,7 @@ def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | No
         total_cost=model_cost + judge_total,
         estimated_wall_time=wall,
         notes=notes,
-        precise_tokens=False,
+        precise_tokens=precise,
     )
 
 
@@ -302,7 +412,15 @@ def _dollar(x: float) -> str:
 
 
 def compute_cost_from_usage(tokens_used: dict | None) -> float:
-    """Sum dollar cost from a Result-style ``tokens_used`` payload."""
+    """Sum dollar cost from a :class:`Result`-style ``tokens_used`` payload.
+
+    Shape::
+
+        {
+          "candidate": {"model": "...", "input_tokens": N, "output_tokens": N, "calls": N},
+          "judges": {"<judge>": {"model": "...", "input_tokens": N, "output_tokens": N, "calls": N}, ...},
+        }
+    """
     if not tokens_used:
         return 0.0
     total = 0.0
