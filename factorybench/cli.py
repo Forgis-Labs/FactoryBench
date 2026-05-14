@@ -163,17 +163,22 @@ def list_templates_cmd(level: str, split: str):
 @click.option("--import", "import_spec", default=None, help="Pre-import a module / .py file so @register_model decorators fire.")
 @click.option("--judges", default=None, help="L4 judge ensemble. 'paper-default' or a comma-separated list of judge specs.")
 @click.option("--judge-cache-only", is_flag=True, help="Refuse new judge API calls; rely on the on-disk cache.")
+@click.option("--judge-concurrency", type=int, default=None, help="Parallel judges per item. Default: min(#judges, 8). Set 1 for sequential.")
 @click.option("--concurrency", type=int, default=1, show_default=True, help="Parallel candidate-model calls (thread pool).")
 @click.option("--resume", "resume_path", type=click.Path(path_type=Path, exists=True), default=None, help="Resume from a prior Result JSON; items already scored are reused.")
 @click.option("--dry-run", is_flag=True, help="Print a cost preview and exit without calling any model.")
 @click.option("-y", "--yes", "assume_yes", is_flag=True, help="Skip the cost confirmation prompt (CI / scripted runs).")
 @click.option("--no-progress", is_flag=True, help="Disable the per-item progress bar.")
-def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, judge_cache_only, concurrency, resume_path, dry_run, assume_yes, no_progress):
+def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, judge_cache_only, judge_concurrency, concurrency, resume_path, dry_run, assume_yes, no_progress):
     """Run a model over the test split and write a Result JSON."""
     if import_spec:
         _import_user_module(import_spec)
 
     panel = _resolve_panel_or_die(judges, cache_only=judge_cache_only)
+    if panel is not None and judge_concurrency is not None:
+        if judge_concurrency < 1:
+            raise click.BadParameter("--judge-concurrency must be >= 1")
+        panel.concurrency = judge_concurrency
     if concurrency < 1:
         raise click.BadParameter("--concurrency must be >= 1")
 
@@ -375,12 +380,17 @@ def cmd_export(level, split, max_items, template, dataset_version, output):
 @click.option("--model-name", default="offline", show_default=True)
 @click.option("--judges", default=None, help="L4 judge ensemble. 'paper-default' or a comma-separated list.")
 @click.option("--judge-cache-only", is_flag=True, help="Refuse new judge API calls; rely on the on-disk cache.")
+@click.option("--judge-concurrency", type=int, default=None, help="Parallel judges per item. Default: min(#judges, 8). Set 1 for sequential.")
 @click.option("--import", "import_spec", default=None, help="Pre-import a module / .py file so @register_model decorators fire (useful for custom judges).")
-def cmd_score(predictions, level, split, dataset_version, output, model_name, judges, judge_cache_only, import_spec):
+def cmd_score(predictions, level, split, dataset_version, output, model_name, judges, judge_cache_only, judge_concurrency, import_spec):
     """Score a predictions JSONL produced by an external runner."""
     if import_spec:
         _import_user_module(import_spec)
     panel = _resolve_panel_or_die(judges, cache_only=judge_cache_only)
+    if panel is not None and judge_concurrency is not None:
+        if judge_concurrency < 1:
+            raise click.BadParameter("--judge-concurrency must be >= 1")
+        panel.concurrency = judge_concurrency
 
     preds: dict[str, str] = {}
     with predictions.open("r", encoding="utf-8") as f:

@@ -27,7 +27,9 @@ import math
 import os
 import re
 import statistics
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -116,6 +118,8 @@ class JudgePanel:
             silently reused.
         cache_only: If True, refuse new API calls and return only cached votes.
             Items missing a cached vote get ``parse_error='judge_cache_miss'``.
+        concurrency: Number of judges to call in parallel per item. Default:
+            ``min(len(judges), 8)``. Set to 1 to force sequential.
     """
 
     def __init__(
@@ -125,6 +129,7 @@ class JudgePanel:
         cache_dir: str | Path | None = "default",
         rubric_version: str = RUBRIC_VERSION,
         cache_only: bool = False,
+        concurrency: int | None = None,
     ):
         self.judge_specs: list[str] = list(judges)
         if not self.judge_specs:
@@ -138,8 +143,15 @@ class JudgePanel:
         # When True, this panel refuses to make new API calls and returns only
         # cached votes; items missing a cached vote get parse_error='judge_cache_miss'.
         self.cache_only: bool = cache_only
-        # Lazy-resolved adapter instances per judge spec.
+        # Run judges in parallel by default -- each judge is a different provider,
+        # so there's no shared rate limit to worry about. Cap at 8 to keep thread
+        # counts sane for big ensembles.
+        if concurrency is None:
+            concurrency = min(len(self.judge_specs), 8)
+        self.concurrency: int = max(1, int(concurrency))
+        # Lazy-resolved adapter instances per judge spec, guarded for thread safety.
         self._adapters: dict[str, Any] = {}
+        self._adapter_lock = threading.Lock()
 
     # -- public API ---------------------------------------------------------- #
 
@@ -154,7 +166,17 @@ class JudgePanel:
     def score(self, item: Item, prediction: str) -> L4Score:
         """Score one prediction against ``item.answer`` using every judge."""
         rendered = self._render_prompt(item, prediction)
-        votes = [self._score_one(spec, rendered, item, prediction) for spec in self.judge_specs]
+        if self.concurrency <= 1 or len(self.judge_specs) <= 1:
+            votes = [self._score_one(spec, rendered, item, prediction) for spec in self.judge_specs]
+        else:
+            votes: list[JudgeVote] = [None] * len(self.judge_specs)  # type: ignore[assignment]
+            with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
+                futures = {
+                    pool.submit(self._score_one, spec, rendered, item, prediction): i
+                    for i, spec in enumerate(self.judge_specs)
+                }
+                for fut in futures:
+                    votes[futures[fut]] = fut.result()
         return L4Score(score=self._aggregate(votes), votes=votes)
 
     # -- internals ----------------------------------------------------------- #
@@ -189,9 +211,10 @@ class JudgePanel:
         return vote
 
     def _get_adapter(self, spec: str):
-        if spec not in self._adapters:
-            self._adapters[spec] = get_model(spec)
-        return self._adapters[spec]
+        with self._adapter_lock:
+            if spec not in self._adapters:
+                self._adapters[spec] = get_model(spec)
+            return self._adapters[spec]
 
     def _render_prompt(self, item: Item, prediction: str) -> str:
         rc = (item.root_cause or "").strip()

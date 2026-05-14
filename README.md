@@ -130,6 +130,12 @@ Judge calls are cached at `~/.cache/factorybench/judges/`, keyed on
 `(item_id, prediction_hash, judge_model, rubric_version)`. Re-runs with the same
 predictions and judge set make zero new API calls.
 
+**Judges run in parallel by default** (one thread per judge in the panel, capped
+at 8). Override with `--judge-concurrency N` -- set `1` to force sequential, or
+raise it for very large ensembles. Each judge is a different provider, so they
+don't share rate limits and parallelism is a free ~3x speedup on the
+paper-default ensemble.
+
 By default, `--level all` skips L4 unless `--judges` is also given.
 
 ## Long-eval robustness

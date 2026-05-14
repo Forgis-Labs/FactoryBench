@@ -3,6 +3,12 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.6
+
+- Parallel judges within an L4 item: `JudgePanel` defaults to
+  `concurrency=min(len(judges), 8)`. CLI: `--judge-concurrency N`. ~3x wall-time
+  reduction per L4 item when running the paper-default ensemble.
+
 ## 0.0.5
 
 - Cost preview (`factorybench cost`, `evaluate --dry-run`, `evaluate -y/--yes`,
