@@ -132,11 +132,48 @@ predictions and judge set make zero new API calls.
 
 By default, `--level all` skips L4 unless `--judges` is also given.
 
+## Long-eval robustness
+
+Three flags meant for real (long, expensive) runs:
+
+```bash
+# Run candidate-model predict() in parallel. API adapters are I/O-bound; threads
+# are the right tool. Order-preserving. Default 1 (sequential). Ignored when
+# the model defines predict_batch.
+factorybench evaluate --model gpt-5.1 --level all --concurrency 8
+
+# If a run crashes, restart it. --resume points at a Result JSON from a prior
+# run; items that were scored without a parse_error are reused verbatim, and only
+# the remaining items are sent to the model (and judges).
+factorybench evaluate --model gpt-5.1 --level L4 --judges paper-default \
+    --output results/my-run.json
+# ... crash midway ...
+factorybench evaluate --model gpt-5.1 --level L4 --judges paper-default \
+    --output results/my-run.json --resume results/my-run.json
+
+# Re-aggregate against a saved judge cache without paying for any new judge call.
+# Items missing a cached vote are reported with parse_error="judge_cache_miss".
+factorybench evaluate --model my-model --level L4 --judges paper-default \
+    --judge-cache-only
+```
+
+Same three options are available on the Python API:
+
+```python
+result = fb.evaluate(
+    model="gpt-5.1",
+    level="L4",
+    judges="paper-default",
+    concurrency=8,
+    resume_from="results/my-run.json",
+    judge_cache_only=False,
+)
+```
+
 ## What's intentionally missing
 
 - **Leaderboard `submit`** subcommand.
-- `--resume` from checkpoint, `--dry-run` cost preview.
-- `--judge-cache-only` (cache exists; flag to refuse new calls is a follow-up).
+- `--dry-run` cost preview.
 - Prompt caching on the Anthropic adapter -- each FactoryBench item has a unique
   time-series body, and the shared prefix per level (description + acronym mapping)
   is well below the 2K / 4K minimum cacheable prefix on Sonnet / Opus. Adding

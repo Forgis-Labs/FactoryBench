@@ -1,8 +1,12 @@
 """Top-level ``evaluate`` entrypoint."""
 from __future__ import annotations
 
+import json
+import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Iterable
 
 from tqdm import tqdm
@@ -31,6 +35,9 @@ def evaluate(
     progress: bool = True,
     model_name: str | None = None,
     judges: JudgePanel | str | None = None,
+    concurrency: int = 1,
+    resume_from: str | Path | None = None,
+    judge_cache_only: bool = False,
 ) -> Result:
     """Run a model over the FactoryBench test split and return a :class:`Result`.
 
@@ -49,21 +56,50 @@ def evaluate(
         judges: A :class:`factorybench.judges.JudgePanel`, or the CLI shorthand
             string (``"paper-default"`` or a comma-separated list). Required to
             score Level 4 items.
+        concurrency: Number of parallel candidate-model calls (ThreadPoolExecutor).
+            Defaults to ``1`` (sequential). Ignored when the model defines
+            ``predict_batch``. Judges are still called sequentially within an item.
+        resume_from: Path to a previously-saved Result JSON. Items whose ``id`` is
+            present in that file AND were scored without a parse error are reused
+            verbatim; everything else is re-run.
+        judge_cache_only: If True, the judge panel refuses to make new API calls
+            and returns only cached votes. Items missing a cached vote are reported
+            with ``parse_error="judge_cache_miss"``. Lets you re-aggregate against a
+            saved cache without re-billing.
     """
     panel = _resolve_judges(judges)
+    if panel is not None and judge_cache_only:
+        panel.cache_only = True
     levels = _resolve_levels_strict(level, have_judges=panel is not None)
     instance = get_model(model)
 
     items = load_split(level=levels, split=split, revision=revision, max_items=max_items)
-    prompts = [render_prompt(it) for it in items]
-
     resolved_name = model_name or (model if isinstance(model, str) else type(instance).__name__)
 
+    resumed = _load_resume(resume_from) if resume_from else {}
+    to_run_indices: list[int] = []
+    reused: dict[int, ItemResult] = {}
+    for i, it in enumerate(items):
+        prior = resumed.get(it.id)
+        if prior is not None and _is_resumable(prior):
+            reused[i] = prior
+        else:
+            to_run_indices.append(i)
+
+    if progress and resumed:
+        print(f"resume: reusing {len(reused)} item(s) from prior run; running {len(to_run_indices)}")
+
+    prompts = [render_prompt(items[i]) for i in to_run_indices]
+
     t0 = time.perf_counter()
-    raw_outputs = _run_predict(instance, prompts, progress=progress)
+    raw_outputs = _run_predict(instance, prompts, progress=progress, concurrency=concurrency)
     wall = timedelta(seconds=time.perf_counter() - t0)
 
-    item_results = [_score_one(it, raw, panel=panel, progress=progress) for it, raw in zip(items, raw_outputs)]
+    fresh_results: dict[int, ItemResult] = {}
+    for i, raw in zip(to_run_indices, raw_outputs):
+        fresh_results[i] = _score_one(items[i], raw, panel=panel)
+
+    item_results = [reused.get(i) or fresh_results[i] for i in range(len(items))]
 
     return Result(
         model_name=resolved_name,
@@ -96,23 +132,107 @@ def _resolve_levels_strict(level: int | str | Iterable[int | str], *, have_judge
     return levels
 
 
-def _run_predict(model: Any, prompts: list[str], *, progress: bool) -> list[str]:
+# --------------------------------------------------------------------------- #
+# Prediction (sequential / concurrent / batched)
+# --------------------------------------------------------------------------- #
+
+def _run_predict(
+    model: Any,
+    prompts: list[str],
+    *,
+    progress: bool,
+    concurrency: int = 1,
+) -> list[str]:
+    """Run the candidate model over ``prompts``. Returns predictions in order."""
+    if not prompts:
+        return []
+
     batch_fn = getattr(model, "predict_batch", None)
     if callable(batch_fn):
         outputs = batch_fn(prompts)
         if not isinstance(outputs, list) or len(outputs) != len(prompts):
             raise RuntimeError("predict_batch must return a list with one entry per prompt")
-        return [str(x) if x is not None else "" for x in outputs]
+        return [_safe_str(x) for x in outputs]
 
-    iterator = tqdm(prompts, desc="evaluate", disable=not progress)
-    return [_safe_str(model.predict(p)) for p in iterator]
+    if concurrency <= 1:
+        iterator = tqdm(prompts, desc="evaluate", disable=not progress)
+        return [_safe_str(model.predict(p)) for p in iterator]
+
+    return _run_predict_threaded(model.predict, prompts, max_workers=concurrency, progress=progress)
+
+
+def _run_predict_threaded(
+    predict_fn,
+    prompts: list[str],
+    *,
+    max_workers: int,
+    progress: bool,
+) -> list[str]:
+    """Order-preserving parallel ``predict`` via a thread pool."""
+    results: list[str] = [""] * len(prompts)
+    bar = tqdm(total=len(prompts), desc=f"evaluate (x{max_workers})", disable=not progress)
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {pool.submit(predict_fn, p): i for i, p in enumerate(prompts)}
+            for fut in futures:
+                idx = futures[fut]
+                try:
+                    results[idx] = _safe_str(fut.result())
+                except Exception as exc:
+                    results[idx] = ""
+                    if progress:
+                        bar.write(f"item {idx}: {type(exc).__name__}: {exc}")
+                bar.update(1)
+    finally:
+        bar.close()
+    return results
 
 
 def _safe_str(x: Any) -> str:
     return "" if x is None else str(x)
 
 
-def _score_one(item: Item, raw: str, *, panel: JudgePanel | None = None, progress: bool = True) -> ItemResult:
+# --------------------------------------------------------------------------- #
+# Resume
+# --------------------------------------------------------------------------- #
+
+def _load_resume(path: str | Path) -> dict[str, ItemResult]:
+    """Load a Result JSON saved by ``Result.save`` and index by item id."""
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    out: dict[str, ItemResult] = {}
+    for row in raw.get("items") or []:
+        out[row["id"]] = ItemResult(
+            id=row["id"],
+            level=row["level"],
+            template_id=row["template_id"],
+            template_type=row["template_type"],
+            answer_format=row["answer_format"],
+            dataset=row.get("dataset"),
+            fault_id=row.get("fault_id"),
+            raw_output=row.get("raw_output"),
+            parsed=row.get("parsed"),
+            score=float(row.get("score")) if row.get("score") is not None else float("nan"),
+            chance=float(row.get("chance", 0.0)),
+            parse_error=row.get("parse_error"),
+            judge_votes=row.get("judge_votes"),
+        )
+    return out
+
+
+def _is_resumable(r: ItemResult) -> bool:
+    """An item is resumable iff it was scored cleanly the previous run."""
+    if r.parse_error is not None:
+        return False
+    if isinstance(r.score, float) and math.isnan(r.score):
+        return False
+    return True
+
+
+# --------------------------------------------------------------------------- #
+# Per-item scoring
+# --------------------------------------------------------------------------- #
+
+def _score_one(item: Item, raw: str, *, panel: JudgePanel | None = None) -> ItemResult:
     """Score one item. L1-L3 use the deterministic scorer; L4 uses ``panel``."""
     parsed: Any = None
     score = float("nan")
@@ -128,9 +248,12 @@ def _score_one(item: Item, raw: str, *, panel: JudgePanel | None = None, progres
                 {"judge": v.judge, "score": v.score, "raw": v.raw, "parse_error": v.parse_error, "cached": v.cached}
                 for v in l4.votes
             ]
-            # If every judge failed to parse, surface that as a parse_error.
             if not l4.valid_votes:
-                parse_error = "all judges failed to return a valid 0/0.5/1 score"
+                # Distinguish cache-only misses from real model failures.
+                if panel.cache_only and all(v.parse_error == "judge_cache_miss" for v in l4.votes):
+                    parse_error = "judge_cache_miss"
+                else:
+                    parse_error = "all judges failed to return a valid 0/0.5/1 score"
         return ItemResult(
             id=item.id,
             level=item.level,

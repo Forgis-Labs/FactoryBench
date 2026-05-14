@@ -114,6 +114,8 @@ class JudgePanel:
         rubric_version: Override the rubric version used for cache keys. Bump
             when you change the rubric template so old cached votes are not
             silently reused.
+        cache_only: If True, refuse new API calls and return only cached votes.
+            Items missing a cached vote get ``parse_error='judge_cache_miss'``.
     """
 
     def __init__(
@@ -122,6 +124,7 @@ class JudgePanel:
         *,
         cache_dir: str | Path | None = "default",
         rubric_version: str = RUBRIC_VERSION,
+        cache_only: bool = False,
     ):
         self.judge_specs: list[str] = list(judges)
         if not self.judge_specs:
@@ -132,6 +135,9 @@ class JudgePanel:
         self.cache_dir: Path | None = Path(cache_dir) if cache_dir else None
         if self.cache_dir is not None:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # When True, this panel refuses to make new API calls and returns only
+        # cached votes; items missing a cached vote get parse_error='judge_cache_miss'.
+        self.cache_only: bool = cache_only
         # Lazy-resolved adapter instances per judge spec.
         self._adapters: dict[str, Any] = {}
 
@@ -164,6 +170,11 @@ class JudgePanel:
         cached = self._cache_get(cache_key)
         if cached is not None:
             return JudgeVote(judge=spec, score=cached["score"], raw=cached["raw"], cached=True)
+
+        if self.cache_only:
+            return JudgeVote(
+                judge=spec, score=float("nan"), raw="", parse_error="judge_cache_miss",
+            )
 
         adapter = self._get_adapter(spec)
         try:

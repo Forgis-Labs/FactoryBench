@@ -162,21 +162,29 @@ def list_templates_cmd(level: str, split: str):
 @click.option("--output", type=click.Path(path_type=Path), default=None, help="Result JSON path (default ./results/...).")
 @click.option("--import", "import_spec", default=None, help="Pre-import a module / .py file so @register_model decorators fire.")
 @click.option("--judges", default=None, help="L4 judge ensemble. 'paper-default' or a comma-separated list of judge specs.")
+@click.option("--judge-cache-only", is_flag=True, help="Refuse new judge API calls; rely on the on-disk cache.")
+@click.option("--concurrency", type=int, default=1, show_default=True, help="Parallel candidate-model calls (thread pool).")
+@click.option("--resume", "resume_path", type=click.Path(path_type=Path, exists=True), default=None, help="Resume from a prior Result JSON; items already scored are reused.")
 @click.option("--no-progress", is_flag=True, help="Disable the per-item progress bar.")
-def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, no_progress):
+def cmd_evaluate(model, level, split, max_items, template, dataset_version, output, import_spec, judges, judge_cache_only, concurrency, resume_path, no_progress):
     """Run a model over the test split and write a Result JSON."""
     if import_spec:
         _import_user_module(import_spec)
 
-    panel = _resolve_panel_or_die(judges)
+    panel = _resolve_panel_or_die(judges, cache_only=judge_cache_only)
+    if concurrency < 1:
+        raise click.BadParameter("--concurrency must be >= 1")
 
     try:
-        return _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel)
+        return _do_evaluate(
+            model, level, split, max_items, template, dataset_version, output,
+            no_progress, panel, concurrency=concurrency, resume_path=resume_path,
+        )
     except (KeyError, NotImplementedError, ImportError, RuntimeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
 
 
-def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel):
+def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel, *, concurrency=1, resume_path=None):
     if template:
         # We need to filter post-load; let evaluate() do its own load + run.
         items = load_split(
@@ -198,7 +206,7 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
         import time
         from datetime import timedelta
         t0 = time.perf_counter()
-        raws = _run_predict(instance, prompts, progress=not no_progress)
+        raws = _run_predict(instance, prompts, progress=not no_progress, concurrency=concurrency)
         wall = timedelta(seconds=time.perf_counter() - t0)
         result = Result(
             model_name=model,
@@ -215,6 +223,8 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
             max_items=max_items,
             progress=not no_progress,
             judges=panel,
+            concurrency=concurrency,
+            resume_from=resume_path,
         )
 
     out_path = output or _default_output_path(model, level, split)
@@ -240,15 +250,27 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
     click.echo(f"saved -> {out_path}")
 
 
-def _resolve_panel_or_die(judges_flag):
+def _resolve_panel_or_die(judges_flag, *, cache_only: bool = False):
     """Translate ``--judges`` into a JudgePanel, after checking API keys."""
     if judges_flag is None:
+        if cache_only:
+            raise click.ClickException("--judge-cache-only requires --judges to be set too")
         return None
     from .judges import parse_judges_flag, precheck_credentials
     try:
         panel = parse_judges_flag(judges_flag)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
+    panel.cache_only = cache_only
+    # In cache-only mode, we never call provider APIs, so skip the key precheck.
+    if cache_only:
+        if panel.is_single_judge and not panel.is_paper_default:
+            click.echo(
+                f"note: single-judge mode ({panel.judge_specs[0]}) -- results will be "
+                "flagged 'single-judge' and are not directly comparable to the paper.",
+                err=True,
+            )
+        return panel
     missing = precheck_credentials(panel)
     if missing:
         lines = [
@@ -309,12 +331,13 @@ def cmd_export(level, split, max_items, template, dataset_version, output):
 @click.option("--output", type=click.Path(path_type=Path), required=True, help="Result JSON path.")
 @click.option("--model-name", default="offline", show_default=True)
 @click.option("--judges", default=None, help="L4 judge ensemble. 'paper-default' or a comma-separated list.")
+@click.option("--judge-cache-only", is_flag=True, help="Refuse new judge API calls; rely on the on-disk cache.")
 @click.option("--import", "import_spec", default=None, help="Pre-import a module / .py file so @register_model decorators fire (useful for custom judges).")
-def cmd_score(predictions, level, split, dataset_version, output, model_name, judges, import_spec):
+def cmd_score(predictions, level, split, dataset_version, output, model_name, judges, judge_cache_only, import_spec):
     """Score a predictions JSONL produced by an external runner."""
     if import_spec:
         _import_user_module(import_spec)
-    panel = _resolve_panel_or_die(judges)
+    panel = _resolve_panel_or_die(judges, cache_only=judge_cache_only)
 
     preds: dict[str, str] = {}
     with predictions.open("r", encoding="utf-8") as f:
