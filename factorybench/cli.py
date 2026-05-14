@@ -83,23 +83,122 @@ def cli():
 # -- info -------------------------------------------------------------------- #
 
 @cli.command("info")
-def cmd_info():
-    """Show install + provider configuration."""
-    click.echo(f"factorybench version : {__version__}")
-    click.echo(f"dataset repo         : {REPO_ID} (HF Hub)")
-    cache = os.environ.get("HF_HOME") or os.environ.get("HUGGINGFACE_HUB_CACHE") or "~/.cache/huggingface"
-    click.echo(f"hf cache             : {cache}")
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON (paste into bug reports).")
+def cmd_info(as_json):
+    """Show install + provider configuration + cache state."""
+    info = _gather_info()
+    if as_json:
+        click.echo(json.dumps(info, indent=2))
+        return
+
+    click.echo(f"factorybench version : {info['version']}")
+    click.echo(f"python               : {info['python']}")
+    click.echo(f"dataset repo         : {info['dataset']['repo_id']} (HF Hub)")
+    click.echo(f"dataset revision     : {info['dataset']['revision'] or '(offline; latest fetched at run time)'}")
+    click.echo(f"hf cache             : {info['dataset']['hf_cache']}")
     click.echo("")
     click.echo("provider credentials:")
     for name, env in PROVIDER_KEYS.items():
-        status = "configured" if os.environ.get(env) else "missing"
+        status = "configured" if info['providers'][env] else "missing"
         click.echo(f"  {name:<10s} ({env:<20s}): {status}")
     click.echo("")
+    cs = info['judge_cache']
+    if cs['exists']:
+        click.echo(f"judge cache          : {cs['path']}")
+        click.echo(f"  entries            : {cs['file_count']}  ({cs['total_mb']:.2f} MiB)")
+        if cs['file_count']:
+            click.echo(f"  oldest / newest    : {cs['oldest_iso']}  ->  {cs['newest_iso']}")
+    else:
+        click.echo(f"judge cache          : {cs['path']} (not present)")
+    click.echo("")
+    click.echo("price table (input $/M / output $/M):")
+    for model, (inp, out) in sorted(info['prices'].items()):
+        click.echo(f"  {model:<22s}: {inp:>5.2f} / {out:>5.2f}")
+    click.echo("")
     click.echo("registered models:")
-    for m in list_models():
-        click.echo(f"  {m}")
-    if not list_models():
+    if info['registered_models']:
+        for m in info['registered_models']:
+            click.echo(f"  {m}")
+    else:
         click.echo("  (none -- use @factorybench.register_model in a script)")
+
+
+def _gather_info() -> dict:
+    import sys
+    from .cache import judge_cache_stats
+    from .cost import PRICES_PER_M_TOKENS
+
+    return {
+        "version": __version__,
+        "python": sys.version.split()[0],
+        "dataset": {
+            "repo_id": REPO_ID,
+            "revision": _resolve_dataset_revision(),
+            "hf_cache": os.environ.get("HF_HOME") or os.environ.get("HUGGINGFACE_HUB_CACHE") or "~/.cache/huggingface",
+        },
+        "providers": {env: bool(os.environ.get(env)) for env in PROVIDER_KEYS.values()},
+        "judge_cache": judge_cache_stats().to_dict(),
+        "prices": {m: list(p) for m, p in PRICES_PER_M_TOKENS.items()},
+        "registered_models": list_models(),
+    }
+
+
+def _resolve_dataset_revision() -> str | None:
+    """Best-effort lookup of the latest commit SHA on the HF dataset's ``main`` branch.
+
+    Returns ``None`` when offline or when ``huggingface_hub`` rejects the call
+    (the loader itself will still work against the HF cache).
+    """
+    try:
+        from huggingface_hub import HfApi
+        api = HfApi()
+        info = api.dataset_info(REPO_ID, timeout=5)
+        return getattr(info, "sha", None)
+    except Exception:
+        return None
+
+
+# -- cache ------------------------------------------------------------------- #
+
+@cli.group("cache")
+def cmd_cache():
+    """Inspect and prune the on-disk judge-vote cache."""
+
+
+@cmd_cache.command("stats")
+@click.option("--cache-dir", type=click.Path(path_type=Path), default=None, help="Override cache location.")
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable JSON.")
+def cmd_cache_stats(cache_dir, as_json):
+    """Show the judge cache size, age, and entry count."""
+    from .cache import judge_cache_stats
+    stats = judge_cache_stats(cache_dir)
+    if as_json:
+        click.echo(json.dumps(stats.to_dict(), indent=2))
+        return
+    click.echo(f"path          : {stats.path}")
+    click.echo(f"exists        : {stats.exists}")
+    click.echo(f"entries       : {stats.file_count}  ({stats.total_mb:.2f} MiB)")
+    if stats.file_count:
+        click.echo(f"oldest entry  : {stats.oldest_iso}")
+        click.echo(f"newest entry  : {stats.newest_iso}")
+
+
+@cmd_cache.command("clear")
+@click.option("--cache-dir", type=click.Path(path_type=Path), default=None, help="Override cache location.")
+@click.option("-y", "--yes", "assume_yes", is_flag=True, help="Skip the confirmation prompt.")
+def cmd_cache_clear(cache_dir, assume_yes):
+    """Delete every cached judge vote (irreversible)."""
+    from .cache import clear_judge_cache, judge_cache_stats
+    stats = judge_cache_stats(cache_dir)
+    if not stats.exists or stats.file_count == 0:
+        click.echo(f"nothing to clear at {stats.path}")
+        return
+    click.echo(f"about to delete {stats.file_count} entries ({stats.total_mb:.2f} MiB) from {stats.path}")
+    if not assume_yes and not click.confirm("continue?", default=False):
+        click.echo("aborted.")
+        return
+    removed = clear_judge_cache(cache_dir)
+    click.echo(f"deleted {removed} cache file(s).")
 
 
 # -- list -------------------------------------------------------------------- #

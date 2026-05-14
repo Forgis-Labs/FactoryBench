@@ -3,6 +3,14 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.8
+
+- `factorybench info` overhaul: pinned dataset revision (HF commit SHA),
+  judge-cache stats, full price table, registered models, Python version.
+  Add `--json` for paste-into-bug-report. New `factorybench cache stats |
+  clear` subcommands. New `factorybench.cache` helpers (`judge_cache_stats`,
+  `clear_judge_cache`, `DEFAULT_JUDGE_CACHE_DIR`).
+
 ## 0.0.7
 
 - Actual cost tracking. `Result.cost` is no longer always `0.0`: it's populated

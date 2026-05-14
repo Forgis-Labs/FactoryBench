@@ -48,7 +48,10 @@ df = result.to_dataframe()
 ## CLI
 
 ```bash
-factorybench info                                            # version, cache, providers
+factorybench info                                            # version, dataset revision, cache, providers, prices
+factorybench info --json                                     # machine-readable (paste into bug reports)
+factorybench cache stats                                     # judge cache size + age
+factorybench cache clear -y                                  # wipe the judge cache
 factorybench list models                                     # registered + built-in
 factorybench list levels                                     # item counts per level
 factorybench list templates --level L2                       # templates within a level
