@@ -276,25 +276,8 @@ def _safe_str(x: Any) -> str:
 
 def _load_resume(path: str | Path) -> dict[str, ItemResult]:
     """Load a Result JSON saved by ``Result.save`` and index by item id."""
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    out: dict[str, ItemResult] = {}
-    for row in raw.get("items") or []:
-        out[row["id"]] = ItemResult(
-            id=row["id"],
-            level=row["level"],
-            template_id=row["template_id"],
-            template_type=row["template_type"],
-            answer_format=row["answer_format"],
-            dataset=row.get("dataset"),
-            fault_id=row.get("fault_id"),
-            raw_output=row.get("raw_output"),
-            parsed=row.get("parsed"),
-            score=float(row.get("score")) if row.get("score") is not None else float("nan"),
-            chance=float(row.get("chance", 0.0)),
-            parse_error=row.get("parse_error"),
-            judge_votes=row.get("judge_votes"),
-        )
-    return out
+    prior = Result.load(path)
+    return {it.id: it for it in prior.items}
 
 
 def _is_resumable(r: ItemResult) -> bool:

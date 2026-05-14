@@ -195,32 +195,7 @@ def _default_name(source, result: Result) -> str:
 
 
 def _load_result_json(path: str | Path) -> Result:
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    items = [
-        ItemResult(
-            id=row["id"],
-            level=row["level"],
-            template_id=row["template_id"],
-            template_type=row["template_type"],
-            answer_format=row["answer_format"],
-            dataset=row.get("dataset"),
-            fault_id=row.get("fault_id"),
-            raw_output=row.get("raw_output"),
-            parsed=row.get("parsed"),
-            score=float(row["score"]) if row.get("score") is not None else float("nan"),
-            chance=float(row.get("chance", 0.0)),
-            parse_error=row.get("parse_error"),
-            judge_votes=row.get("judge_votes"),
-        )
-        for row in (raw.get("items") or [])
-    ]
-    return Result(
-        model_name=raw.get("model_name") or "model",
-        items=items,
-        wall_time=timedelta(seconds=raw.get("wall_time_seconds") or 0.0),
-        cost=raw.get("cost", 0.0),
-        judges=raw.get("judges") or [],
-    )
+    return Result.load(path)
 
 
 # --------------------------------------------------------------------------- #

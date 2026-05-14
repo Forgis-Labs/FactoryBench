@@ -3,6 +3,19 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.10
+
+- Fix: `factorybench evaluate --template L2.7 --max-items N` now filters by
+  template *before* capping, so the natural reading ("first N items of L2.7")
+  works. Previously the cap was applied first and the template filter then
+  found 0 items in the slice.
+- Add: `Result.load(path)` classmethod -- the documented counterpart to
+  `Result.save(path)`. `compare()` and `evaluate --resume` are routed through it.
+- usage.md: dropped the stale `--strict false` advice (parser is already
+  lenient by design), the `comparison.render()` heatmap (markdown/latex/df
+  cover the paper use case), and corrected the `mini` split description
+  (50/level x N levels in scope, not a fixed 200).
+
 ## 0.0.9
 
 - Exact pre-run token counting via the new `factorybench[tokenizers]` extra

@@ -55,7 +55,7 @@ export OPENAI_API_KEY=sk-...
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Run the `mini` split. It contains 200 items balanced across the four levels, finishes in about a minute, and costs a few cents:
+Run the `mini` split. It samples 50 items from each level you're evaluating — so `--level all` without judges runs L1+L2+L3 (150 items) and `--level all --judges paper-default` adds L4 (200 items). Either way it finishes in about a minute and costs a few cents:
 
 ```bash
 factorybench evaluate --model gpt-5.1 --split mini
@@ -223,12 +223,12 @@ results = {
 }
 
 comparison = compare(results)
-comparison.render()              # the model x level heatmap from the paper
 print(comparison.to_markdown())  # paste into a paper draft
 print(comparison.to_latex())     # paste into a LaTeX paper
+comparison.to_dataframe()        # long-form pandas for custom plotting
 ```
 
-The rendered table follows the layout of Figure 3a in the paper, so your numbers drop in next to the published baselines without reformatting.
+The rendered table follows the layout of Figure 3a in the paper, so your numbers drop in next to the published baselines without reformatting. From the command line, `factorybench compare run1.json run2.json --format latex` does the same thing against saved Result files.
 
 ---
 
@@ -396,7 +396,7 @@ Set the corresponding environment variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY
 L4 requires `--judges` to be set explicitly and the corresponding API keys to be present. See the [Level 4 section](#level-4-and-the-llm-as-judge-ensemble) above.
 
 **High parse-failure rate.**
-Check `results.parse_failures()` for the offending outputs. The most common cause is a model adding preamble ("Sure! The answer is C") instead of returning a bare letter. Try `--strict false` for lenient parsing, or adjust your model's system prompt.
+Check `results.parse_failures()` for the offending outputs. The parser already extracts answers from prose preambles like *"Sure! The answer is C"* — it searches for letters / TF strings / numbers anywhere in the output, not just bare tokens. Persistent failures usually mean the model is returning the wrong *kind* of answer (e.g., a word like `"high"` for a scalar-numeric question, or a multi-paragraph essay for a single-letter MCQ). Adjust the system prompt to return only the format the question asks for.
 
 **Cost surprised me.**
 Always run `--dry-run` first on full evaluations. It prints token-level cost estimates without calling the model. The `mini` split is the recommended way to validate a setup before paying for the full corpus.

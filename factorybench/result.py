@@ -131,6 +131,38 @@ class Result:
     def to_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame([asdict(r) for r in self.items])
 
+    @classmethod
+    def load(cls, path: str | Path) -> "Result":
+        """Reload a :class:`Result` from a JSON file saved by :meth:`save`."""
+        from datetime import timedelta
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+        items = [
+            ItemResult(
+                id=row["id"],
+                level=row["level"],
+                template_id=row["template_id"],
+                template_type=row["template_type"],
+                answer_format=row["answer_format"],
+                dataset=row.get("dataset"),
+                fault_id=row.get("fault_id"),
+                raw_output=row.get("raw_output"),
+                parsed=row.get("parsed"),
+                score=float(row["score"]) if row.get("score") is not None else float("nan"),
+                chance=float(row.get("chance", 0.0)),
+                parse_error=row.get("parse_error"),
+                judge_votes=row.get("judge_votes"),
+            )
+            for row in (raw.get("items") or [])
+        ]
+        return cls(
+            model_name=raw.get("model_name") or "model",
+            items=items,
+            wall_time=timedelta(seconds=raw.get("wall_time_seconds") or 0.0),
+            cost=float(raw.get("cost") or 0.0),
+            judges=list(raw.get("judges") or []),
+            tokens_used=dict(raw.get("tokens_used") or {}),
+        )
+
     def save(self, path: str | Path) -> None:
         payload = {
             "model_name": self.model_name,

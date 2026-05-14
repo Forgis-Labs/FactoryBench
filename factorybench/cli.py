@@ -334,16 +334,21 @@ def _cost_gate(model, level, split, max_items, panel, *, dry_run, assume_yes) ->
 
 def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel, *, concurrency=1, resume_path=None, estimated_cost=None):
     if template:
-        # We need to filter post-load; let evaluate() do its own load + run.
+        # Load the whole level, filter to the requested template, THEN cap.
+        # The opposite order would let --max-items slice off non-template items
+        # and silently produce "no items match template L2.7" when the user
+        # asked for the first 3 of L2.7.
         items = load_split(
-            level=level if not template else _level_from_template(template),
+            level=_level_from_template(template),
             split=split,
             revision=dataset_version,
-            max_items=max_items,
+            max_items=None,
         )
         items = _filter_template(items, template)
         if not items:
             raise click.ClickException(f"no items match template {template}")
+        if max_items is not None:
+            items = items[:max_items]
         # Gate L4 templates through the panel.
         if items[0].level == 4 and panel is None:
             raise click.ClickException(L4_REQUIRES_JUDGES_MSG)

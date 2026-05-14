@@ -104,6 +104,41 @@ def test_l4_items_and_fleiss_kappa():
     assert math.isnan(kappa)
 
 
+def test_result_load_round_trip(tmp_path):
+    """Result.load is the documented inverse of Result.save."""
+    original = Result(
+        model_name="m",
+        items=[_item(1, 7, 0.5, 0.5, parse_error=None)],
+        wall_time=timedelta(seconds=12.5),
+        cost=0.456,
+        judges=["gpt-5.1", "claude-sonnet-4-6"],
+        tokens_used={"candidate": {"model": "m", "input_tokens": 100, "output_tokens": 10, "calls": 1}, "judges": {}},
+    )
+    p = tmp_path / "r.json"
+    original.save(p)
+
+    loaded = Result.load(p)
+
+    assert loaded.model_name == "m"
+    assert loaded.cost == 0.456
+    assert loaded.judges == ["gpt-5.1", "claude-sonnet-4-6"]
+    assert loaded.tokens_used["candidate"]["calls"] == 1
+    assert len(loaded.items) == 1
+    assert loaded.items[0].id == original.items[0].id
+    assert loaded.items[0].score == original.items[0].score
+    assert loaded.wall_time.total_seconds() == 12.5
+
+
+def test_result_load_preserves_parse_errors(tmp_path):
+    bad = _item(2, 1, float("nan"), 0.0, parse_error="could not extract a number")
+    p = tmp_path / "r.json"
+    Result(model_name="m", items=[bad]).save(p)
+    loaded = Result.load(p)
+    assert loaded.items[0].parse_error == "could not extract a number"
+    assert math.isnan(loaded.items[0].score)
+    assert len(loaded.parse_failures()) == 1
+
+
 def test_fleiss_kappa_perfect_agreement_three_categories():
     r = Result(
         model_name="m",
