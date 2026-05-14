@@ -45,13 +45,30 @@ class AnthropicAdapter:
         self._model = model
         self._max_tokens = max_tokens
 
+    @property
+    def model_name(self) -> str:
+        return self._model
+
     def predict(self, prompt: str) -> str:
+        text, _ = self.predict_with_usage(prompt)
+        return text
+
+    def predict_with_usage(self, prompt: str) -> tuple[str, dict | None]:
         response = self._client.messages.create(
             model=self._model,
             max_tokens=self._max_tokens,
             messages=[{"role": "user", "content": prompt}],
         )
+        text = ""
         for block in response.content:
             if block.type == "text":
-                return block.text
-        return ""
+                text = block.text
+                break
+        usage = None
+        if getattr(response, "usage", None) is not None:
+            usage = {
+                "input_tokens": int(getattr(response.usage, "input_tokens", 0) or 0),
+                "output_tokens": int(getattr(response.usage, "output_tokens", 0) or 0),
+                "model": self._model,
+            }
+        return text, usage

@@ -152,6 +152,15 @@ class JudgePanel:
         # Lazy-resolved adapter instances per judge spec, guarded for thread safety.
         self._adapters: dict[str, Any] = {}
         self._adapter_lock = threading.Lock()
+        # Running usage tally per judge across the panel's lifetime.
+        # ``model`` is the underlying provider model id (e.g. ``claude-sonnet-4-6``)
+        # learned from the adapter's usage payload; falls back to the spec name
+        # when the adapter doesn't report one.
+        self._usage: dict[str, dict] = {
+            spec: {"model": spec, "input_tokens": 0, "output_tokens": 0, "calls": 0}
+            for spec in self.judge_specs
+        }
+        self._usage_lock = threading.Lock()
 
     # -- public API ---------------------------------------------------------- #
 
@@ -200,15 +209,40 @@ class JudgePanel:
 
         adapter = self._get_adapter(spec)
         try:
-            raw = adapter.predict(rendered_prompt)
+            call = getattr(adapter, "predict_with_usage", None)
+            if callable(call):
+                raw, usage = call(rendered_prompt)
+            else:
+                raw, usage = adapter.predict(rendered_prompt), None
         except Exception as exc:  # surface to caller as parse_error so the run continues
             return JudgeVote(judge=spec, score=float("nan"), raw="", parse_error=f"{type(exc).__name__}: {exc}")
+
+        self._record_usage(spec, usage)
 
         score, perr = _parse_judge_score(raw)
         vote = JudgeVote(judge=spec, score=score, raw=raw, parse_error=perr)
         if perr is None:
             self._cache_put(cache_key, {"score": score, "raw": raw, "judge": spec, "timestamp": time.time()})
         return vote
+
+    def _record_usage(self, spec: str, usage: dict | None) -> None:
+        if not usage:
+            return
+        with self._usage_lock:
+            bucket = self._usage.setdefault(
+                spec, {"model": spec, "input_tokens": 0, "output_tokens": 0, "calls": 0}
+            )
+            bucket["input_tokens"] += int(usage.get("input_tokens", 0) or 0)
+            bucket["output_tokens"] += int(usage.get("output_tokens", 0) or 0)
+            bucket["calls"] += 1
+            reported_model = usage.get("model")
+            if reported_model:
+                bucket["model"] = str(reported_model)
+
+    def usage_by_judge(self) -> dict[str, dict]:
+        """Snapshot of accumulated token usage per judge across this panel's calls."""
+        with self._usage_lock:
+            return {spec: dict(stats) for spec, stats in self._usage.items()}
 
     def _get_adapter(self, spec: str):
         with self._adapter_lock:

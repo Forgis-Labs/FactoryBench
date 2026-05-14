@@ -44,6 +44,9 @@ class Result:
     cost: float = 0.0
     # Judge specs used for L4 scoring (empty if no L4 items were judged).
     judges: list[str] = field(default_factory=list)
+    # Per-call token usage roll-up. Populated when the adapter implements
+    # predict_with_usage; otherwise an empty dict and ``cost`` stays 0.0.
+    tokens_used: dict = field(default_factory=dict)
 
     # ----- aggregate accessors -----
 
@@ -135,6 +138,7 @@ class Result:
             "raw_accuracy": _coerce_nan(self.raw_accuracy),
             "wall_time_seconds": self.wall_time.total_seconds(),
             "cost": self.cost,
+            "tokens_used": self.tokens_used or {},
             "judges": self.judges,
             "judge_mode": self.judge_mode(),
             "fleiss_kappa": _coerce_nan(self.fleiss_kappa()) if self.judges else None,

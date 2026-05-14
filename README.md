@@ -214,6 +214,32 @@ print(est.format())
 est.to_dict()
 ```
 
+### Actual cost after the run
+
+The built-in OpenAI / Anthropic adapters report each call's real
+`response.usage` to `factorybench`. After the run, `Result.cost` carries the
+**actual** dollar total and `Result.tokens_used` shows the breakdown:
+
+```python
+result = evaluate(model="claude-sonnet-4.6", level="L4", judges="paper-default", split="mini")
+result.cost              # 1.4032 (real, not heuristic)
+result.tokens_used
+# {"candidate": {"model": "claude-sonnet-4-6", "input_tokens": ..., "output_tokens": ..., "calls": ...},
+#  "judges": {"gpt-5.1": {"model": "gpt-5.1", "input_tokens": ..., "output_tokens": ..., "calls": ...},
+#             "claude-sonnet-4.6": {...}, "deepseek-v3.2": {...}}}
+```
+
+The CLI summary prints both numbers side by side:
+
+```text
+actual cost         : $1.4032  (estimate was $1.8200)
+```
+
+This works for any adapter that implements
+`predict_with_usage(prompt) -> (str, {"input_tokens": ..., "output_tokens": ..., "model": "..."})`.
+User-registered models that only implement plain `predict()` keep running and
+just report `cost: 0.0` (no spend tracked).
+
 ## Comparing models
 
 After running several models on the same split, drop a model x level table into

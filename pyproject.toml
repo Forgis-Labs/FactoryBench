@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factorybench"
-version = "0.0.6"
+version = "0.0.7"
 description = "Loader, evaluator, and CLI for the FactoryBench test split."
 requires-python = ">=3.10"
 readme = "README.md"

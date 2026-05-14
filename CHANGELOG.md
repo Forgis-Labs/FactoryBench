@@ -3,6 +3,16 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.7
+
+- Actual cost tracking. `Result.cost` is no longer always `0.0`: it's populated
+  from real `response.usage` reported by the OpenAI / Anthropic SDKs and from
+  judge calls in `JudgePanel`. `Result.tokens_used` carries the breakdown
+  (candidate vs each judge) and survives `save()` / `load()`. CLI summary now
+  prints `actual cost: $X.XX (estimate was $Y.YY)`. Adapters gain an optional
+  `predict_with_usage(prompt) -> (str, usage_dict | None)` method; user models
+  that only implement `predict()` continue to work unchanged.
+
 ## 0.0.6
 
 - Parallel judges within an L4 item: `JudgePanel` defaults to

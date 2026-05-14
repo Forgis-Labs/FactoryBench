@@ -50,10 +50,27 @@ class OpenAIAdapter:
         self._model = model
         self._max_tokens = max_tokens
 
+    @property
+    def model_name(self) -> str:
+        """Used by the runtime to bill this adapter against a price-table entry."""
+        return self._model
+
     def predict(self, prompt: str) -> str:
+        text, _ = self.predict_with_usage(prompt)
+        return text
+
+    def predict_with_usage(self, prompt: str) -> tuple[str, dict | None]:
         resp = self._client.chat.completions.create(
             model=self._model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=self._max_tokens,
         )
-        return resp.choices[0].message.content or ""
+        text = resp.choices[0].message.content or ""
+        usage = None
+        if getattr(resp, "usage", None) is not None:
+            usage = {
+                "input_tokens": int(getattr(resp.usage, "prompt_tokens", 0) or 0),
+                "output_tokens": int(getattr(resp.usage, "completion_tokens", 0) or 0),
+                "model": self._model,
+            }
+        return text, usage

@@ -11,6 +11,7 @@ from typing import Any, Iterable
 
 from tqdm import tqdm
 
+from .cost import compute_cost_from_usage
 from .data import load_split
 from .judges import JudgePanel, parse_judges_flag, precheck_credentials
 from .parse import ParseError, parse_output
@@ -92,7 +93,7 @@ def evaluate(
     prompts = [render_prompt(items[i]) for i in to_run_indices]
 
     t0 = time.perf_counter()
-    raw_outputs = _run_predict(instance, prompts, progress=progress, concurrency=concurrency)
+    raw_outputs, candidate_usages = _run_predict(instance, prompts, progress=progress, concurrency=concurrency)
     wall = timedelta(seconds=time.perf_counter() - t0)
 
     fresh_results: dict[int, ItemResult] = {}
@@ -101,12 +102,58 @@ def evaluate(
 
     item_results = [reused.get(i) or fresh_results[i] for i in range(len(items))]
 
+    # Roll up actual token usage + cost.
+    candidate_model_id = _adapter_model_id(instance, fallback=resolved_name)
+    tokens_used = _summarize_usage(
+        candidate_model_id=candidate_model_id,
+        candidate_usages=candidate_usages,
+        panel=panel,
+    )
+    cost = compute_cost_from_usage(tokens_used) if tokens_used else 0.0
+
     return Result(
         model_name=resolved_name,
         items=item_results,
         wall_time=wall,
         judges=list(panel.judge_specs) if panel else [],
+        tokens_used=tokens_used,
+        cost=cost,
     )
+
+
+def _adapter_model_id(instance: Any, *, fallback: str) -> str:
+    """The price-table key for this adapter (e.g. ``gpt-5.1``, ``claude-opus-4-7``)."""
+    return getattr(instance, "model_name", None) or fallback
+
+
+def _summarize_usage(
+    *,
+    candidate_model_id: str,
+    candidate_usages: list[dict | None],
+    panel: JudgePanel | None,
+) -> dict:
+    """Aggregate per-call usage into a {candidate, judges} structure for Result.tokens_used."""
+    cand_in = sum(int(u["input_tokens"]) for u in candidate_usages if u)
+    cand_out = sum(int(u["output_tokens"]) for u in candidate_usages if u)
+    summary = {
+        "candidate": {
+            "model": candidate_model_id,
+            "input_tokens": cand_in,
+            "output_tokens": cand_out,
+            "calls": sum(1 for u in candidate_usages if u),
+        },
+        "judges": {},
+    }
+    if panel is not None:
+        for spec, ledger in panel.usage_by_judge().items():
+            summary["judges"][spec] = {
+                # Underlying provider model (used for price-table lookup), not the spec name.
+                "model": ledger.get("model") or spec,
+                "input_tokens": ledger["input_tokens"],
+                "output_tokens": ledger["output_tokens"],
+                "calls": ledger["calls"],
+            }
+    return summary
 
 
 def _resolve_judges(judges: JudgePanel | str | None) -> JudgePanel | None:
@@ -142,50 +189,81 @@ def _run_predict(
     *,
     progress: bool,
     concurrency: int = 1,
-) -> list[str]:
-    """Run the candidate model over ``prompts``. Returns predictions in order."""
+) -> tuple[list[str], list[dict | None]]:
+    """Run the candidate model over ``prompts``.
+
+    Returns ``(predictions, usages)``. ``usages[i]`` is the per-call usage dict
+    (``{input_tokens, output_tokens, model}``) when the adapter implements
+    ``predict_with_usage``, else ``None``. Order matches ``prompts``.
+    """
     if not prompts:
-        return []
+        return [], []
 
     batch_fn = getattr(model, "predict_batch", None)
     if callable(batch_fn):
         outputs = batch_fn(prompts)
         if not isinstance(outputs, list) or len(outputs) != len(prompts):
             raise RuntimeError("predict_batch must return a list with one entry per prompt")
-        return [_safe_str(x) for x in outputs]
+        return [_safe_str(x) for x in outputs], [None] * len(prompts)
+
+    call = _make_call(model)
 
     if concurrency <= 1:
-        iterator = tqdm(prompts, desc="evaluate", disable=not progress)
-        return [_safe_str(model.predict(p)) for p in iterator]
+        results: list[str] = []
+        usages: list[dict | None] = []
+        for p in tqdm(prompts, desc="evaluate", disable=not progress):
+            text, usage = call(p)
+            results.append(text)
+            usages.append(usage)
+        return results, usages
 
-    return _run_predict_threaded(model.predict, prompts, max_workers=concurrency, progress=progress)
+    return _run_predict_threaded(call, prompts, max_workers=concurrency, progress=progress)
+
+
+def _make_call(model: Any):
+    """Return a function ``(prompt) -> (text, usage_or_None)`` for this adapter."""
+    fn = getattr(model, "predict_with_usage", None)
+    if callable(fn):
+        def call(prompt: str):
+            text, usage = fn(prompt)
+            return _safe_str(text), usage
+        return call
+
+    def call(prompt: str):
+        return _safe_str(model.predict(prompt)), None
+    return call
 
 
 def _run_predict_threaded(
-    predict_fn,
+    call,
     prompts: list[str],
     *,
     max_workers: int,
     progress: bool,
-) -> list[str]:
+) -> tuple[list[str], list[dict | None]]:
     """Order-preserving parallel ``predict`` via a thread pool."""
     results: list[str] = [""] * len(prompts)
+    usages: list[dict | None] = [None] * len(prompts)
     bar = tqdm(total=len(prompts), desc=f"evaluate (x{max_workers})", disable=not progress)
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = {pool.submit(predict_fn, p): i for i, p in enumerate(prompts)}
+            futures = {pool.submit(call, p): i for i, p in enumerate(prompts)}
             for fut in futures:
                 idx = futures[fut]
                 try:
-                    results[idx] = _safe_str(fut.result())
+                    text, usage = fut.result()
                 except Exception as exc:
-                    results[idx] = ""
+                    # Surface as an empty prediction; the scorer will record a
+                    # parse error against this item rather than aborting the run.
+                    text, usage = "", None
                     if progress:
                         bar.write(f"item {idx}: {type(exc).__name__}: {exc}")
+                results[idx] = text
+                usages[idx] = usage
                 bar.update(1)
     finally:
         bar.close()
-    return results
+    return results, usages
 
 
 def _safe_str(x: Any) -> str:

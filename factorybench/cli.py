@@ -196,6 +196,7 @@ def cmd_evaluate(model, level, split, max_items, template, dataset_version, outp
         return _do_evaluate(
             model, level, split, max_items, template, dataset_version, output,
             no_progress, panel, concurrency=concurrency, resume_path=resume_path,
+            estimated_cost=estimated_cost,
         )
     except (KeyError, NotImplementedError, ImportError, RuntimeError, ValueError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -232,7 +233,7 @@ def _cost_gate(model, level, split, max_items, panel, *, dry_run, assume_yes) ->
     return True, est.total_cost
 
 
-def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel, *, concurrency=1, resume_path=None):
+def _do_evaluate(model, level, split, max_items, template, dataset_version, output, no_progress, panel, *, concurrency=1, resume_path=None, estimated_cost=None):
     if template:
         # We need to filter post-load; let evaluate() do its own load + run.
         items = load_split(
@@ -247,20 +248,28 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
         # Gate L4 templates through the panel.
         if items[0].level == 4 and panel is None:
             raise click.ClickException(L4_REQUIRES_JUDGES_MSG)
-        from .evaluate import _run_predict, _score_one
+        from .evaluate import _run_predict, _score_one, _adapter_model_id, _summarize_usage
+        from .cost import compute_cost_from_usage
         from .registry import get_model
         instance = get_model(model)
         prompts = [render_prompt(it) for it in items]
         import time
         from datetime import timedelta
         t0 = time.perf_counter()
-        raws = _run_predict(instance, prompts, progress=not no_progress, concurrency=concurrency)
+        raws, candidate_usages = _run_predict(instance, prompts, progress=not no_progress, concurrency=concurrency)
         wall = timedelta(seconds=time.perf_counter() - t0)
+        tokens_used = _summarize_usage(
+            candidate_model_id=_adapter_model_id(instance, fallback=model),
+            candidate_usages=candidate_usages,
+            panel=panel,
+        )
         result = Result(
             model_name=model,
             items=[_score_one(it, raw, panel=panel) for it, raw in zip(items, raws)],
             wall_time=wall,
             judges=list(panel.judge_specs) if panel else [],
+            tokens_used=tokens_used,
+            cost=compute_cost_from_usage(tokens_used),
         )
     else:
         result = evaluate(
@@ -290,12 +299,29 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
         click.echo(f"  judges              : {', '.join(result.judges)}")
         click.echo(f"  judge mode          : {result.judge_mode()}")
         click.echo(f"  fleiss kappa (L4)   : {_fmt(result.fleiss_kappa())}")
+    if _has_real_usage(result.tokens_used):
+        actual_str = f"${result.cost:,.4f}"
+        if estimated_cost is not None:
+            actual_str += f"  (estimate was ${estimated_cost:,.4f})"
+        click.echo(f"  actual cost         : {actual_str}")
     click.echo("")
     click.echo("  by_level:")
     for k, v in result.by_level().items():
         click.echo(f"    {k:<6s}: {_fmt(v)}")
     click.echo("")
     click.echo(f"saved -> {out_path}")
+
+
+def _has_real_usage(tokens_used: dict | None) -> bool:
+    if not tokens_used:
+        return False
+    cand = (tokens_used.get("candidate") or {})
+    if (cand.get("calls") or 0) > 0:
+        return True
+    for j in (tokens_used.get("judges") or {}).values():
+        if (j.get("calls") or 0) > 0:
+            return True
+    return False
 
 
 def _resolve_panel_or_die(judges_flag, *, cache_only: bool = False):
