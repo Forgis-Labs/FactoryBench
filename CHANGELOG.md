@@ -3,6 +3,50 @@
 Notable changes per release. The `--dataset-version` flag pins the HuggingFace
 dataset revision -- entries here that mention "dataset vX.Y" refer to that.
 
+## 0.0.15
+
+- First clean public release. PyPI distribution via Trusted Publishing:
+  `.github/workflows/release.yml` builds sdist + wheel on every `v*` tag
+  push, runs the test suite against the installed wheel on Python
+  3.10 / 3.11 / 3.12 / 3.13, then publishes to PyPI (OIDC, no API tokens
+  stored). Refuses to publish if the git tag and `pyproject.toml` `version`
+  disagree. `RELEASING.md` documents the one-time PyPI setup.
+- README citation block: full 11-author list (replaces the single-author
+  placeholder in the never-released v0.0.14).
+- (v0.0.14 was published to PyPI with an incomplete citation; yanked.)
+
+## 0.0.13
+
+- OSS publishing prep: add `LICENSE` (Apache-2.0), `.gitignore`, `CONTRIBUTING.md`,
+  GitHub Actions CI (`.github/workflows/tests.yml`, 3.10-3.13 matrix), and a
+  `py.typed` marker. `pyproject.toml` gains `urls`, `keywords`, and
+  `classifiers`; description tightened. README gains CI / license / Python
+  badges and `## Citation` + `## Contributing` + `## License` sections.
+  `usage.md` removed from version control (kept locally; design / spec doc,
+  not part of the public release).
+
+## 0.0.12
+
+- `tiktoken` promoted from `[tokenizers]` extra to a base runtime dependency.
+  Cost previews are tiktoken-counted by default; no opt-in install needed.
+  The heuristic `len(text) / 4` path stays as defensive insurance for
+  air-gapped / lazy-download-fail edge cases.
+- Preview label renamed from "exact tokens (tiktoken)" to "tiktoken-counted"
+  to avoid overclaiming -- tiktoken is OpenAI's tokenizer; we use
+  `cl100k_base` as a close-enough (~5-10%) proxy for Claude / DeepSeek.
+- README install section: dropped the `[tokenizers]` extra; tightened the
+  "Token-count precision" subsection to reflect the new defaults.
+
+## 0.0.11
+
+- `factorybench info`: every missing provider key now shows the exact
+  `export` (bash/zsh) and `$env:` (PowerShell) line to set it, plus a footer
+  pointing at shell-profile persistence and the `source .env` pattern.
+  `--json` output is unchanged.
+- README install section: new "Provider credentials" subsection with per-shell
+  examples and explicit note that the library does not auto-load `.env`
+  (matches OpenAI / Anthropic SDK behavior).
+
 ## 0.0.10
 
 - Fix: `factorybench evaluate --template L2.7 --max-items N` now filters by

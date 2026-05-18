@@ -60,14 +60,6 @@ class Result:
         mean_chance = sum(r.chance for r in scored) / len(scored)
         return chance_corrected(mean_acc, mean_chance)
 
-    @property
-    def raw_accuracy(self) -> float:
-        """Uncorrected mean per-item score."""
-        scored = self._scored()
-        if not scored:
-            return float("nan")
-        return sum(r.score for r in scored) / len(scored)
-
     def by_level(self) -> dict[str, float]:
         return self._groupby(lambda r: f"L{r.level}")
 
@@ -167,7 +159,6 @@ class Result:
         payload = {
             "model_name": self.model_name,
             "score": _coerce_nan(self.score),
-            "raw_accuracy": _coerce_nan(self.raw_accuracy),
             "wall_time_seconds": self.wall_time.total_seconds(),
             "cost": self.cost,
             "tokens_used": self.tokens_used or {},
@@ -189,7 +180,6 @@ class Result:
             f"Result(model={self.model_name!r}",
             f"n={len(self.items)}",
             f"score={_fmt(self.score)}",
-            f"raw_acc={_fmt(self.raw_accuracy)}",
             f"parse_failures={len(self.parse_failures())})",
         ]
         return ", ".join(parts)

@@ -1,0 +1,95 @@
+name: release
+
+# Triggers on pushed tags matching v0.0.0, v1.2.3-rc1, etc.
+# Workflow:
+#   1. Sanity-check the tag against pyproject.toml's `version`.
+#   2. Build sdist + wheel into dist/.
+#   3. Run the test suite against the built artifact (not the source tree).
+#   4. Publish to PyPI via OIDC (Trusted Publishing -- no API tokens stored).
+#
+# One-time setup on the PyPI side (https://pypi.org/manage/account/publishing/):
+#   - Add a "pending publisher" entry pointing at this repo + workflow.
+#   - Owner: <github-org-or-user>;  Repository: factorybench
+#   - Workflow name: release.yml;   Environment: pypi
+# After the first successful publish the entry becomes permanent.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tag matches pyproject version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          proj=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          echo "tag      = ${tag}"
+          echo "pyproject = ${proj}"
+          if [ "${tag}" != "${proj}" ]; then
+            echo "::error::tag (${tag}) does not match pyproject version (${proj}). Bump pyproject before tagging." >&2
+            exit 1
+          fi
+
+  build:
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Show artifacts
+        run: ls -la dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  test-built-artifact:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Install the wheel + dev deps
+        run: |
+          python -m pip install --upgrade pip pytest
+          pip install dist/*.whl
+      - name: Run tests against the installed package (not the source tree)
+        run: |
+          cd /tmp
+          python -m pytest "${GITHUB_WORKSPACE}/tests" -q
+
+  publish:
+    needs: test-built-artifact
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/factorybench
+    permissions:
+      id-token: write  # required for PyPI Trusted Publishing via OIDC
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

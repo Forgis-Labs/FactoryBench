@@ -1,13 +1,19 @@
-"""Token counting with an optional precise backend.
+"""Token counting via ``tiktoken``.
 
-When ``tiktoken`` is installed, this counts tokens with the
-model-appropriate encoding (or ``cl100k_base`` as a universal fallback).
-Without it, falls back to the ``len(text) / 4`` heuristic.
+``tiktoken`` is a runtime dependency, so by default this module counts tokens
+with the model-appropriate encoding (or ``cl100k_base`` as a universal
+fallback). The ``len(text) / 4`` heuristic still lives here as defensive
+insurance for two edge cases: (1) air-gapped / first-run environments where
+tiktoken can't lazy-download its BPE files from
+``openaipublic.blob.core.windows.net``, and (2) niche platforms where the
+``tiktoken`` import itself fails. Use :func:`has_tiktoken` to detect the
+fallback at runtime.
 
-We intentionally do not call Anthropic's ``messages.count_tokens()`` endpoint
-here: it's an authenticated API call per prompt, which would make
-``--dry-run`` chatty, slow, and dependent on an API key. ``cl100k_base`` is a
-close-enough proxy for Claude (within ~5-10%).
+Note: ``tiktoken`` is OpenAI's tokenizer. For Claude / DeepSeek prompts we
+use ``cl100k_base`` as a universal proxy -- close (within ~5-10%) but not
+literally the provider's tokenizer. We intentionally do not call Anthropic's
+``messages.count_tokens()`` endpoint here: it's an authenticated API call per
+prompt, which would make ``--dry-run`` chatty, slow, and dependent on an API key.
 """
 from __future__ import annotations
 

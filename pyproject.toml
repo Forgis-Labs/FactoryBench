@@ -4,25 +4,58 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factorybench"
-version = "0.0.10"
-description = "Loader, evaluator, and CLI for the FactoryBench test split."
+version = "0.0.15"
+description = "Loader, evaluator, and CLI for the FactoryBench benchmark of industrial-machine reasoning across four causal levels."
 requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-authors = [{ name = "Forgis" }]
+authors = [{ name = "Yanis Merzouki", email = "ymerzouki001@gmail.com" }]
+keywords = [
+    "benchmark",
+    "evaluation",
+    "llm",
+    "language-models",
+    "time-series",
+    "industrial",
+    "robotics",
+    "causal-reasoning",
+    "factorybench",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 dependencies = [
     "click>=8.1",
     "huggingface_hub>=0.20",
     "numpy>=1.24",
     "pandas>=2.0",
+    "tiktoken>=0.7",
     "tqdm>=4.66",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Forgis-Labs/FactoryBench"
+Source = "https://github.com/Forgis-Labs/FactoryBench"
+Issues = "https://github.com/Forgis-Labs/FactoryBench/issues"
+Changelog = "https://github.com/Forgis-Labs/FactoryBench/blob/main/CHANGELOG.md"
+Dataset = "https://huggingface.co/datasets/FactoryBench/FactoryBench"
 
 [project.optional-dependencies]
 openai = ["openai>=1.43"]
 anthropic = ["anthropic>=0.40"]
-tokenizers = ["tiktoken>=0.7"]
-all = ["openai>=1.43", "anthropic>=0.40", "tiktoken>=0.7"]
+all = ["openai>=1.43", "anthropic>=0.40"]
 dev = ["pytest>=7.4"]
 
 [project.scripts]
@@ -33,4 +66,4 @@ where = ["."]
 include = ["factorybench*"]
 
 [tool.setuptools.package-data]
-factorybench = ["prices.json"]
+factorybench = ["prices.json", "py.typed"]

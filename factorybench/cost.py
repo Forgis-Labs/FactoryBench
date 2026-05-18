@@ -239,7 +239,10 @@ class CostEstimate:
 
     def format(self) -> str:
         """Return a human-readable preview string."""
-        precision_tag = "exact tokens (tiktoken)" if self.precise_tokens else "heuristic tokens (+/-25%)"
+        # "tiktoken-counted" not "exact": tiktoken is OpenAI's tokenizer; we use it
+        # as a universal-ish proxy for non-OpenAI models (Claude / DeepSeek) too,
+        # where it's close (~5-10%) but not literally the provider's tokenizer.
+        precision_tag = "tiktoken-counted" if self.precise_tokens else "heuristic tokens (+/-25%)"
         lines = [
             f"This will evaluate {self.model} on {self.n_items} item(s).",
             f"Estimated cost ({precision_tag}):",
@@ -376,8 +379,9 @@ def _estimate_for_items(items: list[Item], *, model: str, panel: JudgePanel | No
 
     if not precise:
         notes.append(
-            "token counts are heuristic; install tiktoken for exact counts "
-            "(pip install \"factorybench[tokenizers]\")"
+            "tiktoken is unavailable; falling back to a len(text)/4 heuristic. "
+            "tiktoken is a runtime dependency -- reinstall the package or run "
+            "'pip install tiktoken' to restore tiktoken-counted previews."
         )
 
     # Time estimate (sequential baseline).

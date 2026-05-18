@@ -30,13 +30,11 @@ def test_score_chance_corrected_aggregate():
     )
     # mean_acc=0.75, mean_chance=0.5 -> (0.75-0.5)/0.5 = 0.5
     assert r.score == 0.5
-    assert r.raw_accuracy == 0.75
 
 
 def test_empty_score_is_nan():
     r = Result(model_name="m", items=[])
     assert math.isnan(r.score)
-    assert math.isnan(r.raw_accuracy)
 
 
 def test_parse_failures_excluded_from_score():
@@ -45,7 +43,7 @@ def test_parse_failures_excluded_from_score():
         items=[_item(1, 1, 1.0, 0.0), _item(1, 1, float("nan"), 0.0, parse_error="boom")],
     )
     # Only the first (clean) item contributes.
-    assert r.raw_accuracy == 1.0
+    assert r.score == 1.0  # chance=0 -> chance-corrected == raw mean
     assert len(r.parse_failures()) == 1
 
 

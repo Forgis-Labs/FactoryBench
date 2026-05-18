@@ -98,9 +98,19 @@ def cmd_info(as_json):
     click.echo(f"hf cache             : {info['dataset']['hf_cache']}")
     click.echo("")
     click.echo("provider credentials:")
+    any_missing = False
     for name, env in PROVIDER_KEYS.items():
-        status = "configured" if info['providers'][env] else "missing"
+        configured = info['providers'][env]
+        status = "configured" if configured else "missing"
         click.echo(f"  {name:<10s} ({env:<20s}): {status}")
+        if not configured:
+            any_missing = True
+            click.echo(f"      bash/zsh   : export {env}=...")
+            click.echo(f"      powershell : $env:{env} = '...'")
+    if any_missing:
+        click.echo("  (set in your shell profile -- .bashrc / .zshrc / $PROFILE -- for persistence;")
+        click.echo("   or put values in a .env file and 'source .env' before running. The library")
+        click.echo("   does not auto-load .env to avoid surprising configuration.)")
     click.echo("")
     cs = info['judge_cache']
     if cs['exists']:
@@ -396,7 +406,6 @@ def _do_evaluate(model, level, split, max_items, template, dataset_version, outp
     click.echo(f"  model               : {result.model_name}")
     click.echo(f"  items               : {len(result.items)}")
     click.echo(f"  score (chance-corr) : {_fmt(result.score)}")
-    click.echo(f"  raw accuracy        : {_fmt(result.raw_accuracy)}")
     click.echo(f"  parse failures      : {len(result.parse_failures())}")
     click.echo(f"  wall time           : {result.wall_time}")
     if result.judges:
@@ -562,7 +571,6 @@ def cmd_score(predictions, level, split, dataset_version, output, model_name, ju
 
     click.echo(f"scored {len(item_results)} items -> {output}")
     click.echo(f"  score (chance-corr) : {_fmt(result.score)}")
-    click.echo(f"  raw accuracy        : {_fmt(result.raw_accuracy)}")
     click.echo(f"  parse failures      : {len(result.parse_failures())}")
     if result.judges:
         click.echo(f"  judges              : {', '.join(result.judges)}")

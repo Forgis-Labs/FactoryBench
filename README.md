@@ -1,11 +1,20 @@
 # factorybench
 
-Minimal Python library for loading and scoring the **FactoryBench** test split
-([`FactoryBench/FactoryBench`](https://huggingface.co/datasets/FactoryBench/FactoryBench) on the Hugging Face Hub).
+[![tests](https://github.com/Forgis-Labs/FactoryBench/actions/workflows/tests.yml/badge.svg)](https://github.com/Forgis-Labs/FactoryBench/actions/workflows/tests.yml)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
-This is a focused first cut: it implements the **dataset loader**, **prompt renderer**,
-and **deterministic scorer** for Levels 1–3. Level 4 (free-form decision making) needs
-an LLM-as-judge ensemble and is intentionally out of scope here.
+Python library and CLI for evaluating language models on the **FactoryBench**
+benchmark of industrial-machine reasoning across four causal levels
+(state / intervention / counterfactual / decision). Dataset:
+[`FactoryBench/FactoryBench`](https://huggingface.co/datasets/FactoryBench/FactoryBench)
+on the Hugging Face Hub.
+
+What's included: dataset loader, prompt renderer, deterministic scorer for
+Levels 1-3, opt-in LLM-as-judge ensemble for Level 4 (with cache + Fleiss'
+kappa), built-in OpenAI / Anthropic / DeepSeek adapters, cost preview, model
+comparison, and a CLI covering the full evaluate / export / score / compare
+workflow. See `CHANGELOG.md` for what's landed.
 
 ## Install
 
@@ -13,12 +22,40 @@ an LLM-as-judge ensemble and is intentionally out of scope here.
 pip install -e .                       # base install (mock model only)
 pip install -e ".[openai]"             # adds OpenAI / DeepSeek (gpt-*, deepseek-*)
 pip install -e ".[anthropic]"          # adds Anthropic (claude-*)
-pip install -e ".[tokenizers]"         # exact pre-run token counts (tiktoken)
 pip install -e ".[all]"                # everything
 pip install -e ".[dev]"                # pytest for running the test suite
 ```
 
+The base install includes `tiktoken` for tiktoken-counted cost previews; if it
+ever fails to import (air-gapped environments, lazy BPE-download failure on
+first use), the library falls back to a `len(text) / 4` heuristic and surfaces
+that in the preview output.
+
 Python 3.10+.
+
+### Provider credentials
+
+Set whichever provider keys you need before running:
+
+```bash
+# bash / zsh
+export OPENAI_API_KEY=sk-...
+export ANTHROPIC_API_KEY=sk-ant-...
+export DEEPSEEK_API_KEY=...
+
+# PowerShell
+$env:OPENAI_API_KEY    = 'sk-...'
+$env:ANTHROPIC_API_KEY = 'sk-ant-...'
+$env:DEEPSEEK_API_KEY  = '...'
+```
+
+`factorybench info` shows which providers are configured and prints the exact
+`export` / `$env:` line for any that are missing. The library reads keys from
+the environment only -- it does **not** auto-load `.env` files. If you keep
+keys in a `.env`, source it yourself (`source .env` in bash, or `python-dotenv`
+in your own scripts) before invoking `factorybench` -- this matches the
+behavior of the underlying OpenAI / Anthropic SDKs and avoids surprising
+configuration.
 
 ## Quick start (Python)
 
@@ -221,12 +258,16 @@ print(est.format())
 est.to_dict()
 ```
 
-**Token-count precision.** With ``pip install "factorybench[tokenizers]"``
-the preview uses real `tiktoken` counts (exact for OpenAI, model-appropriate
-encoder when known, `cl100k_base` otherwise). Without it, the heuristic
-`len(text) / 4` rule is used. `CostEstimate.precise_tokens` and the CLI
-output label both indicate which mode is active. Output tokens are estimated
-from a per-answer-format table (still heuristic).
+**Token-count precision.** The base install ships `tiktoken`, so previews
+use real BPE counts (model-appropriate encoder when known, `cl100k_base`
+otherwise). The label `tiktoken-counted` (rather than "exact") reflects that
+`tiktoken` is OpenAI's tokenizer -- for Claude / DeepSeek prompts it's a
+close-enough proxy (~5-10% drift), not literally the provider's tokenizer.
+If `tiktoken` is unavailable at runtime (air-gapped, lazy BPE-download
+failure), the heuristic `len(text) / 4` rule is used and the CLI output
+labels the preview accordingly. `CostEstimate.precise_tokens` exposes the
+same signal in Python. Output tokens are estimated from a per-answer-format
+table (still heuristic, regardless of `tiktoken`).
 
 **Bundled price table.** Ships as `factorybench/prices.json` with a version
 stamp. Inspect with `factorybench prices list`. Three override paths, in
@@ -302,3 +343,25 @@ factorybench compare m0.json m1.json --name gpt-5.1 --name claude-sonnet-4.6
   time-series body, and the shared prefix per level (description + acronym mapping)
   is well below the 2K / 4K minimum cacheable prefix on Sonnet / Opus. Adding
   `cache_control` here would write entries that are never read.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, testing, and the bar
+for PRs. Bug reports should include the output of `factorybench info --json`.
+
+## Citation
+
+If you use FactoryBench in academic work, please cite the paper:
+
+```bibtex
+@article{factorybench2026,
+  title   = {FactoryBench: Evaluating Industrial Machine Understanding},
+  author  = {Merzouki, Yanis and Izquierdo, Coral and Ignuta-Ciuncanu, Matei and G{\'o}mez-Bracamonte, Marcos and Maggioni, Riccardo and Lombardi, Alessandro and Mazzoleni, Camilla and Martelli, Federico and G{\"u}nther, Bal{\'a}zs and Petersen, Jonas and Petersen, Philipp},
+  journal = {arXiv preprint arXiv:2605.07675},
+  year    = {2026}
+}
+```
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
