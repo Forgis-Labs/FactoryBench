@@ -1,0 +1,17 @@
+{
+  "version": "2026-05-13",
+  "updated_at": "2026-05-13T00:00:00Z",
+  "source": "manual snapshot from public pricing pages",
+  "default_rate": {"input_per_m": 5.00, "output_per_m": 15.00},
+  "models": {
+    "claude-opus-4-7":   {"input_per_m": 5.00, "output_per_m": 25.00},
+    "claude-opus-4-6":   {"input_per_m": 5.00, "output_per_m": 25.00},
+    "claude-sonnet-4-6": {"input_per_m": 3.00, "output_per_m": 15.00},
+    "claude-haiku-4-5":  {"input_per_m": 1.00, "output_per_m":  5.00},
+    "gpt-5.1":           {"input_per_m": 5.00, "output_per_m": 15.00},
+    "gpt-4o":            {"input_per_m": 2.50, "output_per_m": 10.00},
+    "gpt-4o-mini":       {"input_per_m": 0.15, "output_per_m":  0.60},
+    "deepseek-v3.2":     {"input_per_m": 0.27, "output_per_m":  1.10},
+    "deepseek-chat":     {"input_per_m": 0.27, "output_per_m":  1.10}
+  }
+}
