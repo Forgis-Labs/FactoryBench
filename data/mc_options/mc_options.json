@@ -1,0 +1,280 @@
+[
+  {
+    "id": "mc_003",
+    "statement": "Following the event, at least one joint speed drops sharply (>=30% below pre-event baseline).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "feedback_speed_{axis}"
+    ],
+    "verifiable_rule": "exists axis i: min(post_event_feedback_speed_i) <= 0.70 * pre_event_feedback_speed_i"
+  },
+  {
+    "id": "mc_004",
+    "statement": "Following the event, joint speeds stay close to baseline (within 10% bounds around pre-event values).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "feedback_speed_{axis}"
+    ],
+    "verifiable_rule": "for all axes i: max_abs(post_event_feedback_speed_i - pre_event_feedback_speed_i) <= 0.10 * max(eps, abs(pre_event_feedback_speed_i))"
+  },
+  {
+    "id": "mc_005",
+    "statement": "Following the event, motor current rises by >=25% while speed magnitude stays <=10% of pre-event baseline (stall-like behavior).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "effort_current_{axis}",
+      "feedback_speed_{axis}"
+    ],
+    "verifiable_rule": "exists axis i: mean(post_event_effort_current_i) >= 1.25 * pre_event_current_i and mean(abs(post_event_feedback_speed_i)) <= 0.10 * max(eps, abs(pre_event_feedback_speed_i))"
+  },
+  {
+    "id": "mc_006",
+    "statement": "Following the event, contact-force magnitude remains low (<=20% above pre-event baseline for most timesteps).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "est_contact_force_{i}",
+      "true_force_{i}"
+    ],
+    "verifiable_rule": "for >=80% of post_event timesteps: vector_norm(post_event_contact_force) <= 1.20 * pre_event_contact_force_norm"
+  },
+  {
+    "id": "mc_007",
+    "statement": "Following the event, contact force shows a significant spike (>=40% above baseline norm).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "est_contact_force_{i}",
+      "true_force_{i}"
+    ],
+    "verifiable_rule": "exists post_event timestep where vector_norm(contact_force) >= 1.40 * pre_event_contact_force_norm"
+  },
+  {
+    "id": "mc_008",
+    "statement": "Following the event, tracking error increases noticeably (>=25% above pre-event mean).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}",
+      "setpoint_speed_{axis}",
+      "feedback_speed_{axis}"
+    ],
+    "verifiable_rule": "mean(post_event_tracking_error) >= 1.25 * mean(pre_event_tracking_error)"
+  },
+  {
+    "id": "mc_009",
+    "statement": "Following the event, tracking error is stable or improved (increase <=10% vs pre-event mean).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}"
+    ]
+  },
+  {
+    "id": "mc_012",
+    "statement": "Following the event, at least one joint current peaks then relaxes (early peak >=20% above baseline, final value >=10% below that peak).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "effort_current_{axis}"
+    ]
+  },
+  {
+    "id": "mc_013",
+    "statement": "Following the event, robot current remains approximately constant (peak-to-peak range <=10% of pre-event baseline).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "robot_current"
+    ],
+    "verifiable_rule": "(max(post_event_robot_current) - min(post_event_robot_current)) <= 0.10 * max(eps, abs(pre_event_robot_current))"
+  },
+  {
+    "id": "mc_014",
+    "statement": "Following the event, robot current increases markedly (>=20% above pre-event mean).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "robot_current"
+    ],
+    "verifiable_rule": "mean(post_event_robot_current) >= 1.20 * pre_event_robot_current"
+  },
+  {
+    "id": "mc_015",
+    "statement": "Following the event, command and measured TCP motion remain aligned (TCP tracking error increase <=10%).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "setpoint_tcp_{i}|setpoint_tcp_speed_{i}",
+      "feedback_tcp_{i}|feedback_tcp_speed_{i}"
+    ],
+    "verifiable_rule": "mean(post_event_tcp_tracking_error) <= 1.10 * mean(pre_event_tcp_tracking_error)",
+    "require": "all"
+  },
+  {
+    "id": "mc_016",
+    "statement": "Following the event, command and measured TCP motion become misaligned (TCP tracking error increase >=25%).",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "setpoint_tcp_{i}|setpoint_tcp_speed_{i}",
+      "feedback_tcp_{i}|feedback_tcp_speed_{i}"
+    ],
+    "verifiable_rule": "mean(post_event_tcp_tracking_error) >= 1.25 * mean(pre_event_tcp_tracking_error)",
+    "require": "all"
+  },
+  {
+    "id": "mc_017",
+    "statement": "Following the event, temperatures rise across multiple joints (>=2 joints with slope >0.5% of baseline per horizon).",
+    "usable_levels": [
+      3
+    ],
+    "required_features": [
+      "joint_temp_{axis}"
+    ],
+    "verifiable_rule": "count_axes i where slope(post_event_joint_temp_i) > 0.005 * max(eps, pre_event_joint_temp_i) >= 2",
+    "disabled_reason_level_2": "Uncalibratable on this corpus: joint temperature is near-constant within an episode, so mc_017 is true on 0% of windows at every threshold from 0.001x to 1000x the default, and mc_018 is a step function (14% -> 97% between 5x and 6x) with no value near 50%. Left in the pool they pinned the item-level true rate to ~38% and pushed the best constant-answer baseline to 61%."
+  },
+  {
+    "id": "mc_018",
+    "statement": "Following the event, temperatures remain stable (slope magnitude <=0.20% of baseline per horizon for at least 80% of joints).",
+    "usable_levels": [
+      3
+    ],
+    "required_features": [
+      "joint_temp_{axis}"
+    ],
+    "disabled_reason_level_2": "Uncalibratable on this corpus: joint temperature is near-constant within an episode, so mc_017 is true on 0% of windows at every threshold from 0.001x to 1000x the default, and mc_018 is a step function (14% -> 97% between 5x and 6x) with no value near 50%. Left in the pool they pinned the item-level true rate to ~38% and pushed the best constant-answer baseline to 61%."
+  },
+  {
+    "id": "mc_019",
+    "statement": "No significant effect: safety stays normal and aggregate error (mean of tracking, TCP-tracking, force, and robot-current deviation terms) increases by <=10%.",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "safety_mode",
+      "tracking features",
+      "force/current features"
+    ],
+    "verifiable_rule": "for all post_event timesteps: safety_mode == 1 and aggregate_error(post_event) <= 1.10 * aggregate_error(pre_event)"
+  },
+  {
+    "id": "mc_020",
+    "statement": "Those come from different robots.",
+    "usable_levels": [
+      1
+    ],
+    "template_id": 3,
+    "verifiable_rule": "Trivial from metadata."
+  },
+  {
+    "id": "mc_020",
+    "statement": "The task is completed successfully.",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [],
+    "verifiable_rule": "check task_success field in episode metadata (baseline or counterfactual section)"
+  },
+  {
+    "id": "mc_022",
+    "statement": "The two robots have different anomalous states. Note: this means either exactly one of them is anomalous, or they both are, but have different anomalies.",
+    "usable_levels": [
+      1
+    ],
+    "template_id": 3,
+    "verifiable_rule": "Trivial from metadata."
+  },
+  {
+    "id": "mc_023",
+    "statement": "The two robots are performing different tasks.",
+    "usable_levels": [
+      1
+    ],
+    "template_id": 3,
+    "verifiable_rule": "Trivial from metadata."
+  },
+  {
+    "id": "mc_026",
+    "statement": "The two robots are performing the same task, but at different phases.",
+    "usable_levels": [
+      1
+    ],
+    "template_id": 3,
+    "verifiable_rule": "Same task_id in metadata but different task_phase at the sampled window."
+  },
+  {
+    "id": "mc_027",
+    "statement": "Both robots are performing pick-and-place, but with different payload weights.",
+    "usable_levels": [
+      1
+    ],
+    "template_id": 3,
+    "verifiable_rule": "Both episodes have task == pick_and_place and different payload_kg in metadata."
+  },
+  {
+    "id": "mc_030",
+    "statement": "Following the event, at least one joint sweeps more than 62 degrees of travel.",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "feedback_pos_{axis}"
+    ]
+  },
+  {
+    "id": "mc_031",
+    "statement": "Following the event, the most active joint accumulates more than 100 degrees of total path length.",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "feedback_pos_{axis}"
+    ]
+  },
+  {
+    "id": "mc_032",
+    "statement": "Following the event, at least one joint's commanded torque varies by more than 101 Nm peak-to-peak.",
+    "usable_levels": [
+      2,
+      3
+    ],
+    "required_features": [
+      "effort_target_torque_{axis}"
+    ]
+  }
+]

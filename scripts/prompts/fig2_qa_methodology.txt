@@ -1,0 +1,146 @@
+Generate a publication-quality academic figure for a NeurIPS 2026 benchmark paper
+called "FactoryBench". This figure (Figure 2) explains the scalable Q&A generation
+pipeline and its two core guarantees: (1) deterministic ground truth and
+(2) enforced semantic diversity via Vendi Score. The reader should understand how
+80 expert templates become thousands of verified Q&A pairs. White background, flat
+design, clean sans-serif typography (Inter or Helvetica Neue).
+
+The figure has a TOP-TO-BOTTOM vertical layout with THREE horizontal rows. ALL text must match exactly what is specified. Do not add,
+remove, or rephrase any text.
+
+═══════════════════════════════════════════════════════════════
+ROW 1, TEMPLATE POOL & VARIABLE SAMPLING
+═══════════════════════════════════════════════════════════════
+This row has a LEFT-TO-RIGHT flow with two main blocks connected by a thick rightward arrow.
+
+--- Block A: Template Pool (left half) ---
+A large rounded rectangle.
+Header: "80 Expert-Authored Templates"
+Subheader: "PhD-level robotics experts, each probing one reasoning capability"
+
+Inside, show FOUR example template cards stacked vertically, each a small
+rounded rectangle. Each card has a colored left accent bar matching its level:
+
+Template 1 (L1):
+  Bold label: "L1, State"
+  Template text in monospace: "What is the {signal} of {joint} at t={timestamp}?"
+  The words in curly braces {signal}, {joint}, {timestamp} are highlighted
+  with background #FFF3CD (warm amber) to show they are variables.
+
+Template 2:
+  Bold label: "L2, Intervention"
+  Template text: "If {signal} on {joint} increases to {value} now, what happens?"
+  Variables highlighted in #FFF3CD.
+
+Template 3:
+  Bold label: "L3, Counterfactual"
+  Template text: "If {signal} had risen to {value} at t={timestamp}, what would have changed?"
+  Variables highlighted in #FFF3CD.
+
+Template 4:
+  Bold label: "L4, Decision"
+  Template text: "Robot stopped with error {error_code}. What recovery steps are needed?"
+  Variables highlighted in #FFF3CD.
+
+--- Block B: Variable Sampling Engine (right half) ---
+A large rounded rectangle
+Header: "Variable Sampling"
+
+Inside, TWO vertically stacked sub-blocks:
+
+Sub-block B1:
+  Bold: "Continuous Variables"
+  Three bullet lines in small text:
+  "signal names  ←  episode columns"
+  "timestamps    ←  episode time range"
+  "thresholds    ←  episode statistics"
+
+Sub-block B2:
+  Bold: "Discrete Variables"
+  Three bullet lines in small text:
+  "task types       ←  curated vocabulary"
+  "anomaly types    ←  curated vocabulary"
+  "root causes      ←  curated vocabulary"
+
+A small annotation below both sub-blocks: "Slots filled at generation time from real episode data"
+
+A thick downward arrow exits Block B toward Row 2.
+
+═══════════════════════════════════════════════════════════════
+ROW 2, TWO GUARANTEES (middle, ~35% height)
+═══════════════════════════════════════════════════════════════
+This row contains TWO large side-by-side panels of equal width, separated
+by a thin vertical divider line (#E0E0E0). Both panels sit inside a shared
+rounded container with a very light background (#FAFBFC) and border #E0E0E0.
+
+--- Panel LEFT: Guarantee 1, Ground Truth ---
+Header with a checkmark icon: "Guarantee 1: Deterministic Ground Truth"
+
+A vertical flow of three steps connected by small downward arrows (#122128):
+
+Step 1, rounded rectangle:
+  Bold: "Labeled Episode Data"
+  Small: "Sensor recordings with expert annotations"
+
+Step 2, rounded rectangle:
+  Bold: "Computation (not inference)"
+  Small: "Ground truth computed directly\nfrom labeled signals and metadata"
+
+Step 3, rounded rectangle:
+  Bold: "Verified Q&A Pair"
+  Small: "Question + deterministic answer"
+  Below, bold green: "Never imputed. Never inferred."
+
+--- Panel RIGHT: Guarantee 2, Semantic Diversity ---
+Header with a scatter-dots: "Guarantee 2: Enforced Diversity"
+
+A vertical flow of three steps connected by small downward arrows:
+
+Step 1, rounded rectangle:
+  Bold: "Three Variation Axes"
+  Inside, three small horizontal pills side by side:
+    Pill 1: "Parameter"
+    Pill 2: "Format"
+    Pill 3: "Template"
+
+Step 2, rounded rectangle:
+  Bold: "Vendi Score"
+  Small: "Measures effective number of\nunique question types in the set"
+  Below, a small inline formula: "VS = exp(−Σ λᵢ log λᵢ)"
+  where λᵢ are eigenvalues of the similarity kernel
+
+Step 3, rounded rectangle:
+  Bold: "Diversity Threshold"
+  Small: "Questions rejected if Vendi Score\ndrops below minimum per level"
+
+A thick downward arrow exits both panels toward Row 3.
+
+═══════════════════════════════════════════════════════════════
+ROW 3, OUTPUT: ANSWER FORMATS
+═══════════════════════════════════════════════════════════════
+Header in bold dark navy centered: "Three Answer Formats"
+
+THREE horizontally arranged rounded cards of equal width, each with a
+colored top bar, white background.
+
+Card 1:
+  Bold: "Multi-Select True/False"
+  Small: "4 statements, exact match"
+  Below, a small example box with gray background:
+  "☑ Joint 3 current > 2A  ✓"
+  "☐ Joint 5 speed < 0.5   ✗"
+  Metric label bottom-right, italic gray: "Metric: Exact Match"
+
+Card 2:
+  Bold: "Ranking"
+  Small: "Permutation ordering"
+  Below, a small example box with gray background:
+  "1. Joint 3  2. Joint 1  3. Joint 5"
+  Metric label bottom-right, italic gray: "Metric: Kendall's τ"
+
+Card 3:
+  Bold: "Tensor Prediction"
+  Small: "Scalar values"
+  Below, a small example box with gray background:
+  "Predicted: 2.87A  |  Actual: 2.91A"
+  Metric label bottom-right, italic gray: "Metric: MAPE"

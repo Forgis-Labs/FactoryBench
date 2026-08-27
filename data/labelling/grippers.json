@@ -1,0 +1,87 @@
+[
+  {
+    "gripper_id": 0,
+    "gripper_model": "2FG14",
+    "manufacturer": "OnRobot",
+    "gripper_type": "2-finger electric parallel gripper",
+    "actuation": "electric",
+    "finger_count": 2,
+    "weight_kg": 1.5,
+    "payload_kg": 14,
+    "payload_kg_form_fit": 20,
+    "grip_force_range_N": [40, 280],
+    "max_stroke_mm": 160,
+    "opening_range_mm": [5, 117],
+    "max_gripping_speed_mm_s": 450,
+    "repeatability_mm": 0.1,
+    "ip_rating": "IP67",
+    "operating_temperature_range_C": [0, 50],
+    "tool_flange": "ISO 9409-1-50-4-M6",
+    "communication": ["Ethernet", "Modbus TCP"],
+    "compatible_robots": ["Universal Robots", "ABB", "KUKA", "Fanuc", "Yaskawa"],
+    "ur_integration": "URCap",
+    "features": [
+      "programmable grip force",
+      "grip detection",
+      "lost-grip detection",
+      "customizable finger design"
+    ],
+    "typical_applications": [
+      "CNC machine tending",
+      "heavy component handling",
+      "assembly tasks",
+      "pick-and-place"
+    ],
+    "used_in_paper_for": "Finger gripping for pick-and-place and peg-in-hole tasks on UR3 and KUKA KR10"
+  },
+  {
+    "gripper_id": 1,
+    "gripper_model": "Screwdriver",
+    "manufacturer": "OnRobot",
+    "gripper_type": "Electric screwdriver end-of-arm tool",
+    "actuation": "electric",
+    "weight_kg": 2.5,
+    "dimensions_mm": [308, 86, 114],
+    "torque_range_Nm": [0.15, 5.0],
+    "max_speed_rpm": 340,
+    "screw_size_range": ["M1.6", "M6"],
+    "max_screw_length_mm": 50,
+    "retracted_screw_length_mm": 35,
+    "bit_types": ["Philips (PH1-PH3)", "Slot", "Torx"],
+    "bit_holder": "magnetic (Type A and Type B)",
+    "bit_extenders_mm": [50, 100],
+    "power_supply": "24 VDC, 0.75 A",
+    "ip_rating": "IP54",
+    "esd_certified": true,
+    "operating_temperature_range_C": [5, 50],
+    "tool_flange": "ISO 9409-1-50-4-M6",
+    "compatible_robots": ["Universal Robots", "ABB", "KUKA", "Fanuc", "Yaskawa", "Doosan"],
+    "ur_integration": "URCap",
+    "screw_feeder_models": ["OnRobot Screw Feeder M1.6", "OnRobot Screw Feeder M2-M6"],
+    "features": [
+      "programmable torque control",
+      "screw detection",
+      "screw length verification",
+      "insertion quality control",
+      "automatic safety stop on excessive axial force",
+      "screw retraction during arm motion"
+    ],
+    "typical_applications": [
+      "electronics assembly",
+      "general assembly automation",
+      "collaborative robot screwdriving",
+      "multi-variant assembly lines"
+    ],
+    "used_in_paper_for": "Automated screwdriving task on UR3"
+  },
+  {
+    "gripper_id": 2,
+    "gripper_model": null,
+    "manufacturer": "Schmalz",
+    "gripper_type": "vacuum gripper",
+    "actuation": "vacuum",
+    "equipment_note": "Schmalz vacuum generator",
+    "notes": "Exact gripper model not reported in the voraus-AD dataset documentation; only the Schmalz vacuum generator is specified.",
+    "used_in_paper_for": "Pick-and-place task on Yu 5 Industrial (voraus-AD)"
+  }
+]

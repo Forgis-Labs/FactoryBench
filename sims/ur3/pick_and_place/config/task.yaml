@@ -1,0 +1,50 @@
+# FactoryBench / pick_and_place  -  task configuration
+
+robot:
+  prim:          "/World/ur3"
+  eef_prim:      "/World/ur3/wrist_3_link/flange"
+  urdf_cfg:      "config/ur3.yml"
+  home_joints:   [-0.284, -1.191, 1.410, -1.790, -1.5708, 0.0]
+  home_position: [0.40, 0.00, 0.25]
+
+scene:
+  cube_prim:          "/World/pick_cube"
+  conveyor_nominal:   [0.40, 0.00, 0.04]
+  conveyor_xy_range:  0.12
+  bin_position:       [0.00, -0.35, 0.10]
+
+physics:
+  sim_dt:  0.016667
+  gravity: [0.0, 0.0, -9.81]
+
+domain_randomization:
+  cube_mass_range:        [0.10, 1.50]
+  cube_friction_range:    [0.10, 0.95]
+  cube_restitution_range: [0.00, 0.30]
+  cube_dim_w_range:       [0.040, 0.080]
+  cube_dim_d_range:       [0.040, 0.080]
+  cube_dim_h_range:       [0.030, 0.060]
+
+noise:
+  perception_xy_std: 0.004
+  perception_z_std:  0.002
+  joint_std:         0.0015
+
+control:
+  suction_radius:  0.06
+  pre_offset_z:    0.15
+  attach_offset_z: 0.03
+  lift_offset_z:   0.15
+  place_offset_z:  0.15
+
+canonical_trajectory:
+  cache_file: "cache/canonical_traj_cache.json"
+  waypoints:
+    home:        [ 0.40,  0.00,  0.25]
+    over_conv:   [ 0.40,  0.00,  0.22]
+    approach:    [ 0.40,  0.00,  0.18]
+    neutral:     [ 0.20, -0.17,  0.28]
+    place_above: [ 0.00, -0.35,  0.22]
+
+logging:
+  log_dir: "logs"

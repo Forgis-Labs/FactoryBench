@@ -1,0 +1,133 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.claude
+
+# OS
+.DS_Store
+Thumbs.db
+
+# FactoryBench specific
+*.json.tmp
+
+# Logs
+*.log
+
+# data
+datasets/open_datasets/*
+data/open_datasets/*
+data/normalized_episodes/*
+data/simulations/*
+data/factorywave/*
+
+#output
+output/*
+# Re-including a file needs its directory re-included first: git will not
+# descend into an excluded directory to find negations.
+!output/figures/
+output/figures/*
+# Figures the appendix needs that cannot be regenerated: their data and code
+# left with their author, and these copies were recovered as vector crops
+# from a compiled PDF. Losing them again would mean redrawing from scratch.
+!output/figures/fig_main_heatmap.pdf
+!output/figures/fig_agent_pipeline_results.pdf
+!output/figures/fig_judge_agreement.pdf
+!output/figures/fig_probe_vs_readout.pdf
+!output/figures/fig_probe_layerwise.pdf
+
+# datasets
+datasets/*
+
+# Claude Code
+.claude/
+
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+# hyperref bookmark files, scoped to the paper builds. A bare `*.out` also
+# swallows the `*.jsonl.out` batch-prediction payloads that src/evaluation
+# and src/scoring read back from Bedrock and Vertex.
+docs/**/*.out
+
+# Generator caches and ad-hoc scratch outputs
+data/.*_cache.json
+phase_files.json
+t7_files.json
+
+# Sim artifacts (keep python source / configs, ignore captures + binary assets)
+sims/**/*.csv
+sims/**/*.parquet
+sims/**/*.h5
+sims/**/*.npy
+sims/**/*.pkl
+sims/**/*.jsonl
+sims/**/cache/
+sims/**/*.stl
+sims/**/*.dae
+sims/**/*.urdf
+sims/**/*.usd
+sims/**/*.usda
+sims/**/*.xacro
+sims/**/*.obj
+sims/**/*.IGS
+sims/**/*.SLDASM
+sims/**/*.SLDPRT
+sims/assets/**/Renderings/
+
+# Default --outdir of scripts/neurips_image_generator.py
+scripts/outputs/
+
+# Local SageMaker eval/scoring artifacts (downloaded from S3, not source)
+/baseline_bm*.tar.gz
+/baseline_bm*/
+/baseline_l*/
+/finetuned_bm*.tar.gz
+/finetuned_bm*/
+/finetuned_l*/
+/level_?_predictions.jsonl
+/eval_summary.json
+finetuning/_factorybench_src.zip

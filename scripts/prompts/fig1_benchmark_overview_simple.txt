@@ -1,0 +1,7 @@
+Create a clean, 16:9 academic infographic for 'FactoryBench.' The figure uses a horizontal flow (Why → What → How) with a flat design and white background.
+
+Column 1 (Why): Titled 'Why FactoryBench?' List three points: the lack of machine-centered reasoning benchmarks, the need for grounded evaluation in industrial AI, and the gap in causal depth (State to Decision Making).
+
+Column 2 (What): Titled 'Multi-Source Input' with a the authors orange border. Show three stacked sources: FactoryWave (UR-series robots), Open-Source (AURSAD/voraus-AD), and Synthetic simulations. Include a note about 'Multivariate sensors + Technical manuals.'
+
+Column 3 (How): Titled 'Evaluation Hierarchy' showing a 4-level vertical stack: L1-State (Reading), L2-Intervention (Predicting), L3-Counterfactual (Hypothesizing), and L4-Decision (Repairing). Use a color gradient from teal to red to show increasing difficulty.

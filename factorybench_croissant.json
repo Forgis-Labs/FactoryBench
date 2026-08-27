@@ -1,0 +1,723 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "https://mlcommons.org/croissant/",
+    "rai": "https://mlcommons.org/croissant/RAI/",
+    "dct": "http://purl.org/dc/terms/",
+    "prov": "http://www.w3.org/ns/prov#"
+  },
+  "@type": "sc:Dataset",
+  "cr:conformsTo": "http://mlcommons.org/croissant/1.0",
+  "name": "FactoryBench",
+  "description": "FactoryBench is a benchmark for evaluating machine-behavior reasoning over industrial robotic telemetry, structured around Pearl's causal hierarchy. Q&A pairs span four reasoning levels: state identification, intervention reasoning, counterfactual analysis, and engineering decision-making (troubleshooting and optimisation).",
+  "url": "https://huggingface.co/datasets/FactoryBench/FactoryBench",
+  "license": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "version": "1.0.0",
+  "citation": "Anonymous et al., FactoryBench: Evaluating Industrial Machine Understanding, 2026. Preprint.",
+  "datePublished": "2026-05-04",
+  "cr:recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "name": "level_1",
+      "description": "Q&A pairs for level 1 of FactoryBench, as a single undivided pool. The released corpus carries no train/validation/test partition.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_qa/level_1.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_1.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "level_2",
+      "description": "Q&A pairs for level 2 of FactoryBench, as a single undivided pool. The released corpus carries no train/validation/test partition.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_qa/level_2.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_2.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "level_3",
+      "description": "Q&A pairs for level 3 of FactoryBench, as a single undivided pool. The released corpus carries no train/validation/test partition.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_qa/level_3.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_3.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "level_4",
+      "description": "Q&A pairs for level 4 of FactoryBench, as a single undivided pool. The released corpus carries no train/validation/test partition.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_qa/level_4.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_4.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text",
+          "description": "The remediation protocol itself, as free text. Graded by an LLM-as-judge ensemble against a rubric, not by exact match."
+        },
+        {
+          "@type": "cr:Field",
+          "name": "root_cause",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "lite_level_1",
+      "description": "FactoryBench-Lite, level 1: the level's share of the balanced 3,000-item evaluation subset. Balanced across templates and, within each template, on the dimension that determines the answer, so that level aggregates are not weighted by template mass.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_lite/level_1.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_1.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "lite_level_2",
+      "description": "FactoryBench-Lite, level 2: the level's share of the balanced 3,000-item evaluation subset. Balanced across templates and, within each template, on the dimension that determines the answer, so that level aggregates are not weighted by template mass.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_lite/level_2.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_2.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "lite_level_3",
+      "description": "FactoryBench-Lite, level 3: the level's share of the balanced 3,000-item evaluation subset. Balanced across templates and, within each template, on the dimension that determines the answer, so that level aggregates are not weighted by template mass.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_lite/level_3.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_3.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "options",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "name": "lite_level_4",
+      "description": "FactoryBench-Lite, level 4: the level's share of the balanced 3,000-item evaluation subset. Balanced across templates and, within each template, on the dimension that determines the answer, so that level aggregates are not weighted by template mass.",
+      "cr:source": {
+        "@type": "cr:FileObject",
+        "@id": "factorybench_lite/level_4.jsonl",
+        "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_4.jsonl",
+        "encodingFormat": "application/x-jsonlines"
+      },
+      "field": [
+        {
+          "@type": "cr:Field",
+          "name": "id",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "level",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_id",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "template_type",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "hides",
+          "dataType": "sc:ItemList"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "question",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "answer",
+          "dataType": "sc:Text",
+          "description": "The remediation protocol itself, as free text. Graded by an LLM-as-judge ensemble against a rubric, not by exact match."
+        },
+        {
+          "@type": "cr:Field",
+          "name": "root_cause",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "acceptance_bounds",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "provenance",
+          "dataType": "sc:StructuredValue"
+        },
+        {
+          "@type": "cr:Field",
+          "name": "context",
+          "dataType": "sc:StructuredValue"
+        }
+      ]
+    }
+  ],
+  "rai:dataUseCases": "FactoryBench measures machine understanding reasoning over industrial robotic telemetry across Pearl's causal hierarchy. Validity has been established for zero-shot benchmark evaluation of LLMs and time-series models on structured industrial Q&A reasoning tasks (state, intervention, counterfactual, decision-making). Not validated for training production control models or transfer to open-domain Q&A.",
+  "rai:dataLimitations": "Domain-specific to factory and industrial robotic scenarios; may not generalise to open-domain Q&A tasks. Faults are atomic and drawn from a closed catalogue of 27 physically injected mechanisms, which differs from compound or gradual real-world faults. Level 3 counterfactual ground truth is approximate: two real runs cannot share an identical pre-injection state, so the signature-kernel-MMD-selected CF pair is an empirical proxy for the do-operation, and L3 scores therefore conflate model reasoning with proxy quality. Not recommended for safety-critical deployment decisions or evaluation outside industrial robotic telemetry.",
+  "rai:dataBiases": "Selection bias towards industrial cobot/arm workflows (UR, KUKA, Yu-Cobot) and their controller terminology; limited diversity of robot platforms and tasks. Size imbalance between levels 2 and 3. Templated questions may favour models tuned to fixed-format benchmarks.",
+  "rai:personalSensitiveInformation": "None. The dataset contains no personal or sensitive information across any of the standard categories (Gender, Socio-economic status, Geography, Language, Age, Culture, Experience or Seniority, Health or medical data, Political or religious beliefs). All data was collected from industrial robots with no human subjects involved.",
+  "rai:dataSocialImpact": "FactoryBench measures whether language models can interpret industrial machine telemetry well enough to support maintenance and operations decisions. Zero-shot evaluation of six frontier models finds no model above 50% (chance-corrected) on the structured levels, and finds the panel ordering reshuffling on the decision-making level: the model leading Levels 1-3 falls to fourth of six on Level 4, where the leader reaches 21.5% under the free-form rubric. The benchmark is intended to make that gap measurable, and to discourage deploying such models in safety-relevant industrial settings before it closes.",
+  "rai:hasSyntheticData": true,
+  "rai:syntheticDataDescription": "Q&A pairs are algorithmically generated from real robotic telemetry signals using structured question templates. The underlying sensor data is collected from physical UR3 and KUKA KR10 robots executing pick-and-place, screwing, and peg-in-hole tasks at 83-125 Hz with systematic fault injection, supplemented with AURSAD and voraus-AD datasets.",
+  "prov:wasDerivedFrom": [
+    {
+      "@type": "sc:Dataset",
+      "name": "FactoryWave",
+      "description": "FactoryWave is a dense multivariate telemetry dataset collected from a UR3 collaborative robot (125 Hz) and a KUKA KR10 industrial arm (83 Hz), supplemented with the AURSAD and voraus-AD open-source datasets.",
+      "url": "https://huggingface.co/datasets/FactoryBench/FactoryBench"
+    },
+    {
+      "@type": "sc:Dataset",
+      "name": "AURSAD",
+      "description": "AURSAD: Universal Robot Screwdriving Anomaly Detection Dataset.",
+      "url": "https://doi.org/10.5281/zenodo.4487073"
+    },
+    {
+      "@type": "sc:Dataset",
+      "name": "voraus-AD",
+      "description": "The voraus-AD Dataset for Anomaly Detection in Robot Applications.",
+      "url": "https://github.com/vorausrobotik/voraus-ad-dataset"
+    }
+  ],
+  "prov:wasGeneratedBy": [
+    {
+      "@type": "prov:Activity",
+      "name": "Telemetry collection",
+      "description": "Experiments: telemetry recorded on physical UR3 and KUKA KR10 robots at 83/125 Hz with physical fault injection from a closed catalogue of 27 atomic mechanisms.",
+      "prov:wasAssociatedWith": {
+        "@type": "prov:Organization",
+        "name": "FactoryBench authors"
+      }
+    },
+    {
+      "@type": "prov:Activity",
+      "name": "Source-dataset preprocessing",
+      "description": "AURSAD and voraus-AD episodes normalised to the FactoryBench schema (feature renaming, axis re-indexing, timestamp unit conversion, fault-label decomposition, phase mapping).",
+      "prov:wasAssociatedWith": {
+        "@type": "prov:SoftwareAgent",
+        "name": "FactoryBench preprocessing pipeline"
+      }
+    },
+    {
+      "@type": "prov:Activity",
+      "name": "Q&A generation",
+      "description": "Deterministic template engine generates Q&A from telemetry episodes and root-cause labels. Each item carries a provenance record; Level 4 items include a root_cause field for LLM-as-judge scoring. No crowd annotators.",
+      "prov:wasAssociatedWith": {
+        "@type": "prov:SoftwareAgent",
+        "name": "FactoryBench Q&A template engine"
+      }
+    }
+  ],
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench-repository",
+      "name": "factorybench-repository",
+      "description": "The FactoryBench dataset repository on Hugging Face.",
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench",
+      "encodingFormat": "git+https",
+      "sha256": "https://github.com/mlcommons/croissant/issues/80"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_qa/level_1.jsonl",
+      "name": "factorybench_qa/level_1.jsonl",
+      "description": "Level 1 of the full corpus, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_1.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_qa/level_2.jsonl",
+      "name": "factorybench_qa/level_2.jsonl",
+      "description": "Level 2 of the full corpus, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_2.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_qa/level_3.jsonl",
+      "name": "factorybench_qa/level_3.jsonl",
+      "description": "Level 3 of the full corpus, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_3.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_qa/level_4.jsonl",
+      "name": "factorybench_qa/level_4.jsonl",
+      "description": "Level 4 of the full corpus, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_qa/level_4.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_lite/level_1.jsonl",
+      "name": "factorybench_lite/level_1.jsonl",
+      "description": "Level 1 of FactoryBench-Lite, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_1.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_lite/level_2.jsonl",
+      "name": "factorybench_lite/level_2.jsonl",
+      "description": "Level 2 of FactoryBench-Lite, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_2.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_lite/level_3.jsonl",
+      "name": "factorybench_lite/level_3.jsonl",
+      "description": "Level 3 of FactoryBench-Lite, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_3.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "factorybench_lite/level_4.jsonl",
+      "name": "factorybench_lite/level_4.jsonl",
+      "description": "Level 4 of FactoryBench-Lite, one JSON object per line.",
+      "containedIn": {
+        "@id": "factorybench-repository"
+      },
+      "contentUrl": "https://huggingface.co/datasets/FactoryBench/FactoryBench/blob/main/factorybench_lite/level_4.jsonl",
+      "encodingFormat": "application/x-jsonlines"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Container manifest, not a project manifest.
+#
+# launch_orchestrator_on_cloud.py uploads this whole directory as the
+# PyTorchProcessor `source_dir`, and SageMaker pip-installs a requirements.txt
+# found at the top of source_dir before run_pipeline.py starts. The
+# orchestrator submits further training and eval jobs from inside the
+# container, so it needs the SageMaker SDK there.
+#
+# Do not add project dependencies here; they belong in pyproject.toml.
+sagemaker>=2.230
+boto3

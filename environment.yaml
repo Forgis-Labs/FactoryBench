@@ -1,0 +1,24 @@
+# Conda shim. It creates an interpreter and hands everything else to pip, so
+# there is exactly one place where dependencies are declared (pyproject.toml).
+#
+# This file used to carry its own parallel dependency list, which drifted:
+# it still named click, fastapi, uvicorn and pydantic, all of which belonged
+# to a package that no longer exists, and named none of torch, requests,
+# huggingface-hub or the cloud SDKs the code actually imports.
+#
+#   conda env create -f environment.yaml
+#   conda activate factorybench
+#
+# Extras, if you need them:
+#   pip install -e ".[gcp]"        Vertex AI inference
+#   pip install -e ".[aws]"        retired Bedrock/SageMaker path
+#   pip install -e ".[finetune]"   Shrike DoRA training and eval
+#   pip install -e ".[dev]"        pytest, ruff, mypy
+name: factorybench
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.11
+  - pip>=23.0
+  - pip:
+      - -e .

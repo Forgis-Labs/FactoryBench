@@ -1,0 +1,123 @@
+# FactoryBench / franka / pick_and_place - task configuration (shared schema)
+# Franka Emika Panda: 7-DOF arm with built-in parallel gripper (2 prismatic finger joints).
+# Reach ~855mm, 3kg payload. Similar workspace to UR5.
+
+robot:
+  name: "franka"
+  prim: "/World/franka"
+  eef_prim: "/World/franka/panda_hand"
+  home_joints: [0.00, -1.30, 0.00, -2.87, 0.00, 2.00, 0.75]
+  robot_usd: "/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd"
+  rmpflow_name: "Franka"
+  wrist_link: "panda_link8"
+
+  gripper:
+    builtin: true
+    tcp_z: 0.105
+    grip_joint_indices: [7, 8]
+    grip_kp: 1000.0
+    grip_kd: 50.0
+    max_effort: 40.0
+    joint_prim_names: ["panda_finger_joint1", "panda_finger_joint2"]
+    joint_opened_positions: [0.05, 0.05]
+    joint_closed_positions: [0.02, 0.02]
+    use_mimic_joints: false
+    eef_prim: "/World/franka/panda_rightfinger"
+
+scene:
+  cube_prim: "/World/pick_cube"
+  conveyor_nominal: [0.50, 0.00, 0.04]
+  conveyor_xy_range: 0.08
+  bin_position: [0.00, -0.42, 0.10]
+  table_height: 0.10
+
+  workcell:
+    floor_size: [4.0, 4.0]
+    rubber_mat_pos: [0.0, 0.65, 0.002]
+    rubber_mat_size: [1.2, 0.7, 0.004]
+    table:
+      center_x: 0.50
+      top_size: [0.65, 0.55, 0.012]
+      leg_spread: [0.28, 0.25]
+      mount_plate_size: [0.20, 0.20, 0.01]
+    conveyor:
+      center: [0.50, 0.00]
+      length: 0.55
+      width: 0.26
+      num_rollers: 8
+    bin:
+      width: 0.26
+      depth: 0.26
+      height: 0.12
+      wall_thickness: 0.003
+      stand_leg_spread: 0.12
+    fence:
+      height: 1.2
+      posts:
+        - [-0.75, -0.65]
+        - [ 0.10, -0.65]
+        - [ 0.95, -0.65]
+        - [ 0.95, -0.08]
+        - [ 0.95,  0.50]
+        - [-0.75,  0.50]
+      panels_back:
+        - { pos: [-0.33, -0.65], width: 0.80 }
+        - { pos: [ 0.53, -0.65], width: 0.80 }
+      panels_right:
+        - { pos: [0.95, -0.37], depth: 0.52 }
+        - { pos: [0.95,  0.21], depth: 0.54 }
+      panels_left:
+        - { pos: [-0.75, -0.28], depth: 0.70 }
+      rail_back:  { pos: [ 0.10, -0.65], width: 1.74 }
+      rail_right: { pos: [ 0.95, -0.08], depth: 1.20 }
+      rail_left:  { pos: [-0.75, -0.28], depth: 0.80 }
+    cabinet:
+      position: [-0.65, -0.48]
+    estop:
+      position: [-0.60, 0.35]
+    tape_markings:
+      front: { pos: [0.0, -0.50], width: 1.00 }
+      right: { pos: [0.58, 0.0], depth: 1.00 }
+      left:  { pos: [-0.58, -0.10], depth: 0.80 }
+    lights:
+      - [0.22, 0.0]
+      - [-0.22, -0.22]
+      - [0.55, -0.38]
+      - [0.0, 0.28]
+
+  controller:
+    end_effector_initial_height: 0.40
+    events_dt: [0.008, 0.005, 0.04, 0.008, 0.008, 0.004, 0.008, 0.10, 0.016, 0.012]
+
+physics:
+  sim_dt: 0.016667
+
+domain_randomization:
+  cube_mass_range:        [0.10, 0.25]
+  cube_friction_range:    [0.80, 2.00]
+  cube_restitution_range: [0.00, 0.20]
+  cube_dim_w_range:       [0.015, 0.045]
+  cube_dim_d_range:       [0.030, 0.080]
+  cube_dim_h_range:       [0.015, 0.060]
+
+noise:
+  perception_xy_std: 0.002
+  perception_z_std:  0.001
+  joint_std:         0.002
+
+control:
+  grasp_xy_threshold: 0.12
+
+logging:
+  log_dir: "logs"
+
+slip_detection:
+  drift_threshold: 0.003
+
+episode:
+  timeout_s: 60.0
+  drop_z_threshold: -0.15
+  bin_xy_tolerance: 0.13
+  bin_z_tolerance: 0.12
+  settle_steps: 30
+  init_steps: 10

@@ -1,0 +1,133 @@
+# FactoryBench / ur5 / screwing  -  task configuration (shared schema)
+# UR5 + screwdriver end-effector screw-driving task.
+#
+# A screw sits in a threaded hole on a workplate on the table.  A
+# screwdriver tool is rigidly attached to the robot flange.  The robot
+# approaches the screw head, aligns the bit, applies downward force,
+# and rotates the wrist to drive the screw down.  Thread engagement is
+# modelled via screw-pitch coupling (depth = angle / 2π × pitch).
+
+robot:
+  name: "ur5"
+  prim: "/World/ur5"
+  eef_prim: "/World/ur5/wrist_3_link/flange"
+  home_joints: [0.00, -1.00, 0.90, -1.4708, -1.5708, 0.00]
+  robot_usd: "/Isaac/Robots/UniversalRobots/ur5/ur5.usd"
+  rmpflow_name: "UR5"
+  wrist_link: "wrist_3_link"
+
+  # Screwdriver tool (GrabCAD model converted to USD)
+  # Parented under the flange prim, rides with the articulation automatically
+  tool:
+    prim: "/World/ur5/wrist_3_link/flange/screwdriver"
+    usd: "assets/screwdriver/screwdriver.usd"
+    tcp_z: 0.126              # distance from flange to bit tip (measured from mesh)
+    mass: 0.35                # tool mass in kg
+
+scene:
+  # Screw (dynamic rigid body, driven down by the screwdriver)
+  screw_prim: "/World/screw"
+  # Workplate with threaded hole (static)
+  workplate_prim: "/World/cell/workplate"
+
+  # Screw start position (head sitting on workplate surface)
+  screw_position: [0.45, -0.10, 0.10]
+  screw_xy_range: 0.02       # per-episode XY randomisation
+
+  table_height: 0.10
+
+  workcell:
+    floor_size: [4.0, 4.0]
+    rubber_mat_pos: [0.0, 0.70, 0.002]
+    rubber_mat_size: [1.2, 0.7, 0.004]
+    table:
+      center_x: 0.45
+      top_size: [0.80, 0.70, 0.012]
+      leg_spread: [0.35, 0.30]
+      mount_plate_size: [0.22, 0.22, 0.01]
+    # Workplate (metal plate with screw holes, sits on table)
+    workplate:
+      size: [0.20, 0.20, 0.010]   # 200×200×10 mm aluminium plate
+      position: [0.45, -0.10]      # XY center (Z = table_height)
+    # Screw geometry (M12 hex-head bolt, visible at sim camera distance)
+    screw:
+      head_radius: 0.010     # M12 hex head (20mm diam)
+      head_height: 0.012     # 12mm head height
+      shank_radius: 0.006    # M12 shank (12mm diam)
+      shank_length: 0.035    # 35mm thread length
+    fence:
+      height: 1.2
+      posts:
+        - [-0.80, -0.70]
+        - [ 0.10, -0.70]
+        - [ 1.00, -0.70]
+        - [ 1.00, -0.10]
+        - [ 1.00,  0.55]
+        - [-0.80,  0.55]
+      panels_back:
+        - { pos: [-0.35, -0.70], width: 0.86 }
+        - { pos: [ 0.55, -0.70], width: 0.86 }
+      panels_right:
+        - { pos: [1.00, -0.40], depth: 0.56 }
+        - { pos: [1.00,  0.225], depth: 0.61 }
+      panels_left:
+        - { pos: [-0.80, -0.30], depth: 0.76 }
+      rail_back:  { pos: [ 0.10, -0.70], width: 1.84 }
+      rail_right: { pos: [ 1.00, -0.075], depth: 1.29 }
+      rail_left:  { pos: [-0.80, -0.30], depth: 0.84 }
+    cabinet:
+      position: [-0.70, -0.50]
+    estop:
+      position: [-0.65, 0.38]
+    tape_markings:
+      front: { pos: [0.0, -0.52], width: 1.10 }
+      right: { pos: [0.62, 0.0], depth: 1.10 }
+      left:  { pos: [-0.62, -0.12], depth: 0.85 }
+    lights:
+      - [0.25, 0.0]
+      - [-0.25, -0.25]
+      - [0.60, -0.40]
+      - [0.0, 0.30]
+
+  controller:
+    end_effector_initial_height: 0.42
+    # Phase timings for the 6-phase screwing controller:
+    #   0: approach, move above screw head
+    #   1: descend, lower bit onto screw head
+    #   2: engage, settle / apply light downward force
+    #   3: screw_cw, rotate wrist CW to drive screw
+    #   4: disengage, lift bit off screw
+    #   5: retract, retract to home height
+    events_dt: [0.006, 0.004, 0.02, 0.002, 0.008, 0.010]
+
+physics:
+  sim_dt: 0.016667
+
+domain_randomization:
+  # Screw mass range (steel M6-M10 cap screws)
+  screw_mass_range:        [0.005, 0.025]
+  screw_friction_range:    [0.25, 0.50]
+  screw_restitution_range: [0.00, 0.10]
+
+noise:
+  perception_xy_std: 0.001
+  perception_z_std:  0.0005
+  joint_std:         0.002
+
+control:
+  # Screwing parameters
+  screw_pitch: 0.00125          # 1.25 mm/rev (M8 coarse)
+  screw_target_depth: 0.025     # 25 mm target insertion
+  screw_depth_tolerance: 0.002  # ±2 mm success threshold
+  screw_max_torque: 10.0        # Nm, torque limit (cross-thread / stripped)
+  screw_angular_vel: 2.0        # rad/s, wrist rotation speed during driving
+  screw_downward_force: 5.0     # N, constant downward force during screwing
+
+logging:
+  log_dir: "logs"
+
+episode:
+  timeout_s: 60.0
+  drop_z_threshold: -0.15
+  settle_steps: 30
+  init_steps: 10

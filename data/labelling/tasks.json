@@ -1,0 +1,191 @@
+[
+  {
+    "id": "pick_and_place",
+    "name": "Pick and Place",
+    "description": "Robot picks an object from a source location and places it at a target location (bin).",
+    "phases": [
+      {
+        "id": "above_pick",
+        "label": 0,
+        "name": "Above Pick",
+        "description": "EEF moves to a waypoint directly above the object."
+      },
+      {
+        "id": "descend",
+        "label": 1,
+        "name": "Descend",
+        "description": "EEF lowers toward the object."
+      },
+      {
+        "id": "settle",
+        "label": 2,
+        "name": "Settle",
+        "description": "Brief hold to let physics settle before grasping."
+      },
+      {
+        "id": "close",
+        "label": 3,
+        "name": "Close",
+        "description": "Gripper closes around the object."
+      },
+      {
+        "id": "lift",
+        "label": 4,
+        "name": "Lift",
+        "description": "EEF lifts the grasped object off the surface."
+      },
+      {
+        "id": "move_xy",
+        "label": 5,
+        "name": "Move XY",
+        "description": "Lateral transfer toward the bin."
+      },
+      {
+        "id": "lower",
+        "label": 6,
+        "name": "Lower",
+        "description": "EEF lowers into the bin."
+      },
+      {
+        "id": "open",
+        "label": 7,
+        "name": "Open",
+        "description": "Gripper opens, object released."
+      },
+      {
+        "id": "retract",
+        "label": 8,
+        "name": "Retract",
+        "description": "EEF moves away from the bin."
+      },
+      {
+        "id": "return",
+        "label": 9,
+        "name": "Return",
+        "description": "EEF returns to home configuration."
+      }
+    ]
+  },
+  {
+    "id": "screwing",
+    "name": "Screwing",
+    "description": "Robot tightens a pre-gripped screw into a threaded hole, then loosens and retrieves it.",
+    "phases": [
+      {
+        "id": "approach",
+        "label": 0,
+        "name": "Approach",
+        "description": "EEF moves to a pre-contact waypoint above the fastener."
+      },
+      {
+        "id": "descend_to_screw",
+        "label": 1,
+        "name": "Descend",
+        "description": "EEF lowers to engage the fastener."
+      },
+      {
+        "id": "screw",
+        "label": 2,
+        "name": "Screw",
+        "description": "Continuous downward force + wrist rotation to thread."
+      },
+      {
+        "id": "disengage",
+        "label": 3,
+        "name": "Disengage",
+        "description": "Gripper opens / tool lifts off."
+      },
+      {
+        "id": "retract_after_screw",
+        "label": 4,
+        "name": "Retract",
+        "description": "EEF returns to a safe height."
+      },
+      {
+        "id": "descend_to_loosen",
+        "label": 5,
+        "name": "Descend",
+        "description": "EEF lowers to engage the fastener."
+      },
+      {
+        "id": "loosen",
+        "label": 6,
+        "name": "Loosen",
+        "description": "Loosen screw."
+      },
+      {
+        "id": "engage",
+        "label": 7,
+        "name": "Engage",
+        "description": "Gripper closes."
+      },
+      {
+        "id": "retract_home",
+        "label": 8,
+        "name": "Retract",
+        "description": "EEF returns to a home position."
+      }
+    ]
+  },
+  {
+    "id": "peg_in_hole",
+    "name": "Peg in Hole",
+    "description": "Robot inserts a pre-gripped peg into a fixture/slot, releases it, then retrieves it and returns home.",
+    "phases": [
+      {
+        "id": "above_hole_approach",
+        "label": 0,
+        "name": "Above Hole",
+        "description": "EEF moves above the hole and aligns."
+      },
+      {
+        "id": "insert",
+        "label": 1,
+        "name": "Insert",
+        "description": "EEF pushes peg downward into the hole."
+      },
+      {
+        "id": "disengage",
+        "label": 2,
+        "name": "Disengage",
+        "description": "Gripper opens."
+      },
+      {
+        "id": "above_hole_rise",
+        "label": 3,
+        "name": "Above Hole",
+        "description": "EEF rises back to the waypoint above the hole."
+      },
+      {
+        "id": "retract_after_insert",
+        "label": 4,
+        "name": "Retract",
+        "description": "EEF returns to home position."
+      },
+      {
+        "id": "above_object_descend",
+        "label": 5,
+        "name": "Above Object",
+        "description": "EEF moves above the object and aligns with object."
+      },
+      {
+        "id": "engage",
+        "label": 6,
+        "name": "Engage",
+        "description": "Gripper closes."
+      },
+      {
+        "id": "above_object_rise",
+        "label": 7,
+        "name": "Above Object",
+        "description": "EEF rises back to the waypoint above the object."
+      },
+      {
+        "id": "retract_home",
+        "label": 8,
+        "name": "Retract",
+        "description": "EEF returns to home position."
+      }
+    ]
+  }
+]

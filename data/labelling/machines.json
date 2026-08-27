@@ -1,0 +1,491 @@
+[
+  {
+    "machine_id": 0,
+    "machine_model": "UR3e",
+    "manufacturer": "Universal Robots",
+    "series": "E-series",
+    "machine_type": "Collaborative robot (cobot)",
+    "weight_kg": 11,
+    "payload_kg": 3,
+    "degrees_of_freedom": 6,
+    "joint_rotation": {
+      "wrist_joints": "360_degree_rotation",
+      "end_joint": "infinite_rotation"
+    },
+    "typical_applications": [
+      "light assembly tasks",
+      "automated workbench scenarios"
+    ],
+    "control_interfaces": [
+      "UR PolyScope (teach pendant)",
+      "UrScript",
+      "TCP/IP socket connection",
+      "RTDE (Real-Time Data Exchange)"
+    ],
+    "minimum_polyscope_version_for_screwdriver": "5.4",
+    "used_in_paper_for": "Automated screwdriving anomaly detection dataset collection (AURSAD)",
+    "safety_modes": {
+      "variable": "safety_mode",
+      "description": "Safety state of the Universal Robots controller as reported via RTDE.",
+      "enum": [
+        {
+          "name": "NORMAL",
+          "value": 1,
+          "description": "Robot is operating normally within configured safety limits."
+        },
+        {
+          "name": "REDUCED",
+          "value": 2,
+          "description": "Robot is operating in reduced mode with limited speed and/or force due to safety configuration or zone activation."
+        },
+        {
+          "name": "PROTECTIVE_STOP",
+          "value": 3,
+          "description": "Protective stop triggered due to collision detection, excessive force, or safety threshold violation. Requires operator reset."
+        },
+        {
+          "name": "RECOVERY",
+          "value": 4,
+          "description": "Robot is in recovery mode following a safety event and requires manual intervention."
+        },
+        {
+          "name": "SAFEGUARD_STOP",
+          "value": 5,
+          "description": "External safeguard device (e.g., light curtain, safety door, interlock) has triggered a stop."
+        },
+        {
+          "name": "SYSTEM_EMERGENCY_STOP",
+          "value": 6,
+          "description": "Emergency stop activated from the robot control box."
+        },
+        {
+          "name": "ROBOT_EMERGENCY_STOP",
+          "value": 7,
+          "description": "Emergency stop activated from the teach pendant or robot-mounted E-stop button."
+        },
+        {
+          "name": "VIOLATION",
+          "value": 8,
+          "description": "Configured safety limits (speed, position, joint limits, etc.) have been violated."
+        },
+        {
+          "name": "FAULT",
+          "value": 9,
+          "description": "Internal safety system fault detected. System requires troubleshooting before operation can resume."
+        },
+        {
+          "name": "AUTOMATIC_MODE_SAFEGUARD_STOP",
+          "value": 12,
+          "description": "Safeguard stop triggered while the robot is operating in automatic mode."
+        },
+        {
+          "name": "SYSTEM_THREE_POSITION_ENABLING_STOP",
+          "value": 13,
+          "description": "Stop triggered due to incorrect activation of the system three-position enabling device."
+        },
+        {
+          "name": "TP_THREE_POSITION_ENABLING_STOP",
+          "value": 14,
+          "description": "Stop triggered due to incorrect activation of the teach pendant three-position enabling device."
+        },
+        {
+          "name": "IMMI_EMERGENCY_STOP",
+          "value": 15,
+          "description": "Emergency stop triggered through an IMMI (external machinery interface) safety connection."
+        },
+        {
+          "name": "IMMI_SAFEGUARD_STOP",
+          "value": 16,
+          "description": "Safeguard stop triggered through an IMMI (external machinery interface) safety connection."
+        },
+        {
+          "name": "PROFISAFE_WAITING_FOR_PARAMETERS",
+          "value": 17,
+          "description": "Robot is waiting for safety parameters via PROFIsafe communication before operation can proceed."
+        },
+        {
+          "name": "PROFISAFE_AUTOMATIC_MODE_SAFEGUARD_STOP",
+          "value": 18,
+          "description": "Safeguard stop triggered via PROFIsafe while in automatic mode."
+        },
+        {
+          "name": "PROFISAFE_SAFEGUARD_STOP",
+          "value": 19,
+          "description": "Safeguard stop triggered through PROFIsafe safety communication."
+        },
+        {
+          "name": "PROFISAFE_EMERGENCY_STOP",
+          "value": 20,
+          "description": "Emergency stop triggered through PROFIsafe safety communication."
+        },
+        {
+          "name": "SAFETY_API_SAFEGUARD_STOP",
+          "value": 22,
+          "description": "Safeguard stop triggered via the Safety API interface."
+        }
+      ]
+    },
+    "joint_modes": {
+      "variable": "joint_mode",
+      "description": "Per-joint servo control state of each UR robot joint as reported via RTDE. One value is provided for each joint (0\u00e2\u20ac\u201c5 on UR3e).",
+      "enum": [
+        {
+          "name": "RESET",
+          "value": 235,
+          "description": "Joint is in reset state following a fault or shutdown event."
+        },
+        {
+          "name": "SHUTTING_DOWN",
+          "value": 236,
+          "description": "Joint controller is in the process of shutting down."
+        },
+        {
+          "name": "BACKDRIVE",
+          "value": 238,
+          "description": "Backdrive mode active; joint can be manually moved with reduced resistance."
+        },
+        {
+          "name": "POWER_OFF",
+          "value": 239,
+          "description": "Joint motor power is disabled."
+        },
+        {
+          "name": "READY_FOR_POWER_OFF",
+          "value": 240,
+          "description": "Joint is prepared for power-off but not yet fully powered down."
+        },
+        {
+          "name": "NOT_RESPONDING",
+          "value": 245,
+          "description": "Joint controller is not responding; communication failure or internal issue."
+        },
+        {
+          "name": "MOTOR_INITIALISATION",
+          "value": 246,
+          "description": "Joint motor is undergoing initialization sequence."
+        },
+        {
+          "name": "BOOTING",
+          "value": 247,
+          "description": "Joint controller is booting."
+        },
+        {
+          "name": "BOOTLOADER",
+          "value": 249,
+          "description": "Joint is in bootloader mode (firmware loading state)."
+        },
+        {
+          "name": "VIOLATION",
+          "value": 251,
+          "description": "Joint safety or operational limits have been violated."
+        },
+        {
+          "name": "FAULT",
+          "value": 252,
+          "description": "Joint has encountered a fault condition and requires intervention."
+        },
+        {
+          "name": "RUNNING",
+          "value": 253,
+          "description": "Joint is operating normally under active control."
+        },
+        {
+          "name": "IDLE",
+          "value": 255,
+          "description": "Joint is powered and ready but not actively moving."
+        }
+      ]
+    },
+    "robot_modes": {
+      "variable": "robot_mode",
+      "description": "Overall operational state of the Universal Robots controller as reported via RTDE. This reflects the high-level lifecycle state of the robot arm and safety control system.",
+      "enum": [
+        {
+          "name": "DISCONNECTED",
+          "value": 0,
+          "description": "Connection with the safety control board is not established."
+        },
+        {
+          "name": "CONFIRM_SAFETY",
+          "value": 1,
+          "description": "Robot is validating and updating safety settings before enabling operation."
+        },
+        {
+          "name": "BOOTING",
+          "value": 2,
+          "description": "Safety control board is booting and communication with other components is being verified."
+        },
+        {
+          "name": "POWER_OFF",
+          "value": 3,
+          "description": "Robot is powered but joints are not energized. Ready to boot up the joints."
+        },
+        {
+          "name": "POWER_ON",
+          "value": 4,
+          "description": "Robot joints are in the process of booting up and being energized."
+        },
+        {
+          "name": "IDLE",
+          "value": 5,
+          "description": "Robot joints are powered and ready, but not executing motion. Can transition to RUNNING or BACKDRIVE."
+        },
+        {
+          "name": "BACKDRIVE",
+          "value": 6,
+          "description": "Robot is in backdrive mode. Brakes are selectively released to allow restricted manual movement."
+        },
+        {
+          "name": "RUNNING",
+          "value": 7,
+          "description": "Brakes are fully released and robot is ready to execute or currently executing a program. Safety mode is active and displayed in PolyScope."
+        },
+        {
+          "name": "UPDATING",
+          "value": 8,
+          "description": "Controller firmware is being updated."
+        },
+        {
+          "name": "POWERING_OFF",
+          "value": 9,
+          "description": "Robot arm is in the process of powering down."
+        },
+        {
+          "name": "ARM_BOOTING",
+          "value": 10,
+          "description": "Robot arm hardware is booting up."
+        },
+        {
+          "name": "ARM_UPDATING",
+          "value": 11,
+          "description": "Robot arm firmware is being updated."
+        }
+      ]
+    },
+    "runtime_states": {
+      "variable": "runtime_state",
+      "enum": [
+        {
+          "name": "STOPPING",
+          "value": 0
+        },
+        {
+          "name": "STOPPED",
+          "value": 1
+        },
+        {
+          "name": "PLAYING",
+          "value": 2
+        },
+        {
+          "name": "PAUSING",
+          "value": 3
+        },
+        {
+          "name": "PAUSED",
+          "value": 4
+        },
+        {
+          "name": "RESUMING",
+          "value": 5
+        }
+      ]
+    }
+  },
+  {
+    "machine_id": 1,
+    "machine_type": "CNC milling machine",
+    "manufacturer": null,
+    "model": null,
+    "origin": "University of Michigan Smart Lab experiments",
+    "machine_category": "Computer Numerical Control (CNC) milling machine",
+    "axes": [
+      {
+        "name": "X-axis",
+        "sensor_data": "position, velocity, acceleration"
+      },
+      {
+        "name": "Y-axis",
+        "sensor_data": "position, velocity, acceleration"
+      },
+      {
+        "name": "Z-axis",
+        "sensor_data": "position, velocity, acceleration"
+      }
+    ],
+    "spindle": {
+      "sensor_data": "motor readings"
+    },
+    "workpiece_material": "wax",
+    "experiment_count": 18,
+    "purpose": "Tool wear detection data collection for machine learning",
+    "data_source": "Kaggle dataset (tool-wear-detection-in-cnc-mill)",
+    "notes": "Exact CNC machine make/model not specified in dataset documentation",
+    "safety_modes": {},
+    "joint_modes": {},
+    "robot_modes": {},
+    "runtime_states": {}
+  },
+  {
+    "machine_id": 2,
+    "machine_model": "Yu 5 Industrial",
+    "manufacturer": "Agile Robots SE",
+    "series": "Yu",
+    "machine_type": "Collaborative robot (cobot)",
+    "weight_kg": 31.5,
+    "payload_kg": 5,
+    "payload_kg_at_reduced_reach": 7,
+    "payload_kg_at_reduced_reach_mm": 850,
+    "reach_mm": 1000,
+    "repeatability_mm": 0.05,
+    "degrees_of_freedom": 6,
+    "joint_position_limits_deg": {
+      "joint_1": [
+        -220,
+        220
+      ],
+      "joint_2": [
+        -310,
+        130
+      ],
+      "joint_3": [
+        -160,
+        160
+      ],
+      "joint_4": [
+        -310,
+        130
+      ],
+      "joint_5": [
+        -220,
+        220
+      ],
+      "joint_6": "continuous"
+    },
+    "joint_speed_limits_deg_s": {
+      "joint_1": 141,
+      "joint_2": 141,
+      "joint_3": 169,
+      "joint_4": 180,
+      "joint_5": 180,
+      "joint_6": 180
+    },
+    "tcp_max_linear_speed_m_s": 2.0,
+    "tcp_force_control_accuracy_N": 0.5,
+    "power_supply": "220-230 VAC, 50/60 Hz",
+    "average_power_consumption_W": 250,
+    "full_load_current_A": 6.3,
+    "ip_rating": "IP54",
+    "operating_temperature_range_C": [
+      5,
+      40
+    ],
+    "integrated_sensors": [
+      "torque sensors on all 6 axes",
+      "built-in 2D camera with dual high-power LEDs",
+      "Neural Processing Unit (NPU) for object recognition"
+    ],
+    "safety_certifications": [
+      "ISO 10218-1",
+      "ISO 13849-1 (Category 3, Performance Level d)",
+      "ISO/TS 15066",
+      "IEC 61508",
+      "T\u00c3\u0153V S\u00c3\u0153D Certificate No. Z10 116233 0004 Rev. 01"
+    ],
+    "typical_applications": [
+      "machine tending",
+      "assembly operations",
+      "pick-and-place tasks",
+      "collaborative human-robot interaction"
+    ],
+    "control_interfaces": [
+      "Ethernet (browser-based interface via Chrome)",
+      "Plug-and-play peripheral connectivity"
+    ],
+    "used_in_paper_for": "Multivariate time-series anomaly detection dataset collection (voraus-AD)",
+    "safety_modes": {},
+    "joint_modes": {},
+    "robot_modes": {}
+  },
+  {
+    "machine_id": 3,
+    "machine_model": "KR 10 R1100-2",
+    "manufacturer": "KUKA",
+    "series": "KR AGILUS-2",
+    "machine_type": "Industrial 6-axis robot arm",
+    "weight_kg": 56,
+    "payload_kg": 5,
+    "payload_kg_max": 11.1,
+    "reach_mm": 1101,
+    "repeatability_mm": 0.02,
+    "degrees_of_freedom": 6,
+    "joint_position_limits_deg": {
+      "joint_1": [-170, 170],
+      "joint_2": [-190, 45],
+      "joint_3": [-120, 156],
+      "joint_4": [-185, 185],
+      "joint_5": [-120, 120],
+      "joint_6": [-350, 350]
+    },
+    "joint_speed_limits_deg_s": {
+      "joint_1": 300,
+      "joint_2": 225,
+      "joint_3": 330,
+      "joint_4": 360,
+      "joint_5": 360,
+      "joint_6": 433
+    },
+    "ip_rating": "IP65",
+    "operating_temperature_range_C": [0, 45],
+    "typical_applications": [
+      "high-speed assembly",
+      "packaging",
+      "handling",
+      "machine tending"
+    ],
+    "control_interfaces": [
+      "KUKA smartPAD (teach pendant)",
+      "KRL (KUKA Robot Language)",
+      "EtherCAT",
+      "PROFINET",
+      "EtherNet/IP"
+    ],
+    "controller": "KR C4 compact / KR C5 micro",
+    "used_in_paper_for": "Real industrial robot data recording for FactoryBench anomaly detection benchmark",
+    "safety_modes": {},
+    "joint_modes": {},
+    "robot_modes": {},
+    "runtime_states": {
+      "variable": "runtime_state",
+      "source_variable": "kuka_robot_process_state",
+      "description": "Program execution state of the KUKA KRC4/KRC5 controller ROBOT interpreter as reported via the robot data interface ($PRO_STATE1).",
+      "enum": [
+        {
+          "name": "P_FREE",
+          "value": 0,
+          "description": "No program selected; program memory is free."
+        },
+        {
+          "name": "P_RESET",
+          "value": 1,
+          "description": "Program is loaded and in reset state; initialised but not yet started."
+        },
+        {
+          "name": "P_ACTIVE",
+          "value": 2,
+          "description": "Program is actively running."
+        },
+        {
+          "name": "P_STOP",
+          "value": 3,
+          "description": "Program execution is stopped (paused); resumable without reset."
+        },
+        {
+          "name": "P_END",
+          "value": 4,
+          "description": "Program execution has reached the end; robot is stationary."
+        }
+      ]
+    }
+  }
+]

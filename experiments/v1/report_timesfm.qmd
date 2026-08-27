@@ -1,0 +1,565 @@
+---
+title: "TimesFM-2.5: A Second Time-Series Foundation Model Baseline for FactoryBench"
+subtitle: "Full-scale zero-shot evaluation on the 150k test split (n=469), with head-to-head against Chronos-Bolt"
+author: "FactoryBench team"
+date: today
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    embed-resources: true
+    fig-align: center
+execute:
+  echo: true
+  warning: false
+---
+
+```{python}
+#| label: setup
+#| include: false
+import json
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from IPython.display import Image
+
+HERE = Path(".").resolve()
+
+T_TIMES = json.loads((HERE / "timesfm_analysis_summary.json").read_text())
+T_CHRON = None
+chron_path = HERE / "analysis_summary.json"
+if chron_path.exists():
+    T_CHRON = json.loads(chron_path.read_text())
+```
+
+## 1. Executive summary
+
+We evaluate **TimesFM-2.5** (`google/timesfm-2.5-200m-pytorch`, $\sim$200 M
+parameters) under exactly the same parsing, scoring, and chance-correction
+pipeline used for the Chronos-Bolt baseline (Appendix~D of the paper). On the
+**full 469-item test split** of the three forecasting templates (L1.7, L2.4,
+L2.5), TimesFM-2.5 achieves chance-corrected accuracy of **56.3 %** on L1.7,
+**46.9 %** on L2.4, and **50.1 %** on L2.5 — slightly above Chronos-Bolt on
+L1.7 (51.5 %), tied on L2.4 (46.9 % vs 46.9 %), and tied within bootstrap CI
+on L2.5 (50.1 % vs 49.7 %). Inference takes 88 s on a single A10G GPU
+(vs Chronos-Bolt's 24 s), still 2–3 orders of magnitude faster than
+running an LLM panel.
+
+Two TSFMs of comparable parameter count and pretraining-budget order produce
+**substantively similar numbers** on the FactoryBench forecasting slice. This
+strengthens the appendix's central claim: the result is not an artefact of the
+particular TSFM chosen — it is a property of pretrained forecasters as a
+class. It also keeps the second-message intact: both models can address only
+3 of 21 templates.
+
+```{python}
+#| label: tbl-headline
+#| echo: false
+def fmt(v): return f"{v:.3f}"
+rows = []
+for tag in ["L1.7", "L2.4", "L2.5"]:
+    t = T_TIMES["templates"][tag]
+    rows.append({
+        "Template": tag,
+        "n": t["n"],
+        "Raw mean": fmt(t["raw_mean"]),
+        "Raw 95% CI": f"[{t['raw_ci_lo']:.3f}, {t['raw_ci_hi']:.3f}]",
+        "Chance-corrected": fmt(t["cc_mean"]),
+        "CC 95% CI": f"[{t['cc_ci_lo']:.3f}, {t['cc_ci_hi']:.3f}]",
+    })
+em = T_TIMES["L1.7_exact_match"]
+rows.append({
+    "Template": "L1.7 (exact-match)",
+    "n": em["n"],
+    "Raw mean": fmt(em["raw_mean"]),
+    "Raw 95% CI": f"[{em['raw_ci_lo']:.3f}, {em['raw_ci_hi']:.3f}]",
+    "Chance-corrected": fmt(em["cc_mean"]),
+    "CC 95% CI": "—",
+})
+pd.DataFrame(rows)
+```
+
+## 2. Background and motivation
+
+### 2.1 The reviewer critique (recap)
+
+The Chronos-Bolt appendix is framed around that reviewer comment:
+
+> *"No time-series foundation models are evaluated. The paper motivates the
+> benchmark partly for evaluating 'time-series models' (it is in the abstract),
+> but every evaluated model is a general-purpose LLM receiving serialized
+> numerical data as text. Chronos, TimesFM, Moment are the obvious baselines."*
+
+Chronos-Bolt addresses the first half of the request. This notebook addresses
+the second half. The key concern Chronos-Bolt alone leaves open is
+**robustness**: any single TSFM result invites the objection that the numbers
+are model-specific. A second, independently developed TSFM that produces
+substantively similar numbers shifts the claim from "this particular
+forecaster is competitive" to "TSFMs as a class are competitive on the
+forecasting slice."
+
+### 2.2 Why TimesFM-2.5 specifically
+
+We chose `google/timesfm-2.5-200m-pytorch` because:
+
+- **Independent of Chronos.** Different lab (Google Research vs Amazon),
+  different architecture family (decoder-style with separate point and
+  quantile heads vs Chronos's encoder-decoder with a 9-quantile head),
+  different pretraining corpus.
+- **Same parameter scale.** 200 M parameters matches Chronos-Bolt-base
+  exactly; size is held fixed.
+- **Same zero-shot capability.** No benchmark-specific fine-tuning
+  required, matching the LLM panel setting.
+- **Publicly available and well-cited.** Aligns with the second TSFM
+  directly named in the paper's Related Work (`\cite{das2024decoder}`).
+
+A multivariate TSFM (Moirai-MoE) or a non-decoder family member (Moment,
+Lag-Llama) would be the next natural follow-ups; we leave them as future
+work and note the limitation in §6.
+
+### 2.3 Template applicability (recap)
+
+A pure forecaster has neither a language interface nor a notion of options,
+ranking, or counterfactual conditioning. Of the 21 question templates
+released in `factorynet_qa_150k`, only three reduce to a well-posed
+forecasting problem: L1.7 (state, scalar forecast), L2.4 (intervention,
+scalar forecast under a known anomaly), and L2.5 (intervention, 6-joint
+tensor forecast). The remaining 18 require classification, ranking,
+free-form text, or counterfactual conditioning. **This 3 of 21 = 14 %
+template ceiling applies to TimesFM-2.5 exactly as it does to Chronos-Bolt:**
+neither model has a language head.
+
+| Template | Level | Question type | Answer | Applicable? |
+|---|---|---|---|---|
+| L1.1, L1.2 | State | Anomaly / fault classification | MC | ✗ |
+| L1.3 | State | Severity ranking | Ranking | ✗ |
+| L1.5, L1.6 | State | Root cause / KPI effect | Free-form / MC | ✗ |
+| **L1.7** | **State** | **Signal at $T+n$** | **Numerical** | ✓ |
+| L2.1, L2.2 | Intervention | Effect of / choice of intervention | MC | ✗ |
+| L2.3 | Intervention | Intervention ranking | Ranking | ✗ |
+| **L2.4** | **Interv.** | **Signal at $T+n$ (anomalous)** | **Numerical** | ✓ |
+| **L2.5** | **Interv.** | **6-joint values at $T+n$** | **Tensor[6]** | ✓ |
+| L2.6 | Intervention | Effect description | Free-form | ✗ |
+| L3.1–L3.6 | Counterfactual | "If X had not happened…" | MC / Ranking / FF | ✗ |
+| L4.1–L4.3 | Decision | Troubleshooting, optimization | Free-form | ✗ |
+
+### 2.4 What we hold fixed
+
+By design, only the forecasting model changes between the Chronos and TimesFM
+runs:
+
+- **Same items** — the 469 applicable Q&A pairs from the test split.
+- **Same parsing** (`parse_qa.py`) — reverse-decoded numeric arrays, target
+  signal and horizon picked the same way.
+- **Same scorer** (`scoring.py`) — piecewise-margin, $E=1/4$ chance
+  correction.
+- **Same $R/12$ margin** computed at evaluation time for L1.7, alongside the
+  exact-match fallback (see §4.3).
+- **Same bootstrap procedure** — 1000 resamples, percentile method, fixed
+  seed `12345` (`analyze.py:RNG_SEED`); CC interval endpoints are
+  $\max(0,(b-1/4)/(1-1/4))$ for the corresponding raw bootstrap quantiles.
+
+## 3. Methodology — what differs from Chronos
+
+We refer the reader to the Chronos appendix for the data pipeline,
+template-applicability table, and scoring details. The deltas for TimesFM-2.5
+are:
+
+- **Loading.** The published `timesfm` package on PyPI requires Python <3.12
+  (carries `paxml`/`lingvo` as a hard dep). We install from source
+  (`pip install /tmp/timesfm-src` against the upstream Git repo) which only
+  requires `numpy`, `huggingface_hub`, `safetensors`, and `torch>=2.0`. We
+  also bypass the `PyTorchModelHubMixin.from_pretrained` path because the
+  installed `huggingface_hub` (1.13) forwards a `proxies=` kwarg into the
+  model constructor, which TimesFM 2.5's wrapper does not accept; we
+  manually `hf_hub_download` the safetensors and call `load_checkpoint`
+  directly. The fix is encapsulated in `run_timesfm.py:TimesFM25Forecaster`.
+- **Output API.** TimesFM 2.5 returns `(point_forecast, quantile_forecast)`.
+  We use the **point forecast** at the last predicted step. (Chronos-Bolt
+  returns 9 quantiles; we used the median.) For both, the prediction is the
+  model's canonical scalar estimate at horizon $h$.
+- **Compile config.** TimesFM 2.5 requires a one-time `compile()` call with
+  `(max_context, max_horizon)`. We pass `(512, 64)` so the same compiled
+  graph handles every item; FactoryBench contexts are $\le 77$ steps and
+  horizons $\le 10$, well within these bounds.
+- **Multivariate handling for L2.5.** Same as Chronos-Bolt: 6 independent
+  univariate calls, one per joint. TimesFM 2.5 has no native multivariate
+  mode either.
+
+## 4. Results
+
+### 4.1 Per-template scores
+
+```{python}
+#| label: fig-per-template
+#| fig-cap: "TimesFM-2.5: raw and chance-corrected scores per template, with 95% bootstrap CIs."
+Image("timesfm_fig_per_template.png")
+```
+
+```{python}
+#| label: tbl-headline-2
+#| echo: false
+rows = []
+for tag in ["L1.7", "L2.4", "L2.5"]:
+    t = T_TIMES["templates"][tag]
+    rows.append({
+        "Template": tag,
+        "n": t["n"],
+        "Raw": f"{t['raw_mean']:.3f}",
+        "Raw CI": f"[{t['raw_ci_lo']:.3f}, {t['raw_ci_hi']:.3f}]",
+        "CC": f"{t['cc_mean']:.3f}",
+        "CC CI": f"[{t['cc_ci_lo']:.3f}, {t['cc_ci_hi']:.3f}]",
+    })
+pd.DataFrame(rows)
+```
+
+### 4.2 Head-to-head with Chronos-Bolt
+
+The two TSFMs were evaluated on the same items under the same scorer, so
+this comparison is apples-to-apples in every respect except the model
+itself.
+
+```{python}
+#| label: tbl-head-to-head
+#| echo: false
+def row_for(label, src):
+    t = src["templates"]
+    em = src.get("L1.7_exact_match", {})
+    return {
+        "Model": label,
+        "L1.7 raw": f"{t['L1.7']['raw_mean']:.3f}",
+        "L1.7 CC": f"{t['L1.7']['cc_mean']:.3f}",
+        "L2.4 raw": f"{t['L2.4']['raw_mean']:.3f}",
+        "L2.4 CC": f"{t['L2.4']['cc_mean']:.3f}",
+        "L2.5 raw": f"{t['L2.5']['raw_mean']:.3f}",
+        "L2.5 CC": f"{t['L2.5']['cc_mean']:.3f}",
+        "L1.7 exact-match raw": f"{em.get('raw_mean', 0):.3f}" if em else "—",
+        "Wall (s)": f"{src['total_inference_time_s']:.1f}",
+    }
+rows = [row_for("TimesFM-2.5 (200M)", T_TIMES)]
+if T_CHRON is not None:
+    rows.append(row_for("Chronos-Bolt (200M)", T_CHRON))
+pd.DataFrame(rows)
+```
+
+### 4.3 L1.7 margin caveat: both scoring conventions
+
+L1.7 items in the released dataset do **not** carry a `margin` field in
+`acceptance_bounds`, so the LLM scorer falls through to **exact match**
+(`|pred - gt| < 1e-4`) — essentially unattainable for a real-valued
+forecast. We score TimesFM-2.5 under **both** conventions: the *intended*
+$R/12$ calibration (matching how the paper calibrates tensor scoring at
+chance level $E=1/4$) and the strict exact-match fallback.
+
+```{python}
+#| echo: false
+em = T_TIMES["L1.7_exact_match"]
+t = T_TIMES["templates"]["L1.7"]
+print(f"L1.7 with R/12 margin (intended; chance level E=1/4):")
+print(f"  raw {t['raw_mean']:.3f} [{t['raw_ci_lo']:.3f}, {t['raw_ci_hi']:.3f}]"
+      f"  → chance-corrected {t['cc_mean']:.3f}")
+print(f"L1.7 with exact-match fallback (LLM scorer's behaviour):")
+print(f"  raw {em['raw_mean']:.3f} [{em['raw_ci_lo']:.3f}, {em['raw_ci_hi']:.3f}]"
+      f"  → chance-corrected {max(0, (em['raw_mean']-0.25)/0.75):.3f}")
+if T_CHRON is not None:
+    cem = T_CHRON["L1.7_exact_match"]
+    ct = T_CHRON["templates"]["L1.7"]
+    print(f"\nFor comparison, Chronos-Bolt under the same two conventions:")
+    print(f"  R/12:        raw {ct['raw_mean']:.3f} → cc {ct['cc_mean']:.3f}")
+    print(f"  exact-match: raw {cem['raw_mean']:.3f} → cc 0.000")
+```
+
+The exact-match number ($\le 4\,\%$) is what a strict head-to-head with the
+LLM pipeline would yield on L1.7. The $R/12$ number ($\sim 67\,\%$ raw,
+$\sim 56\,\%$ chance-corrected) is what the *intended* calibration yields and
+is what every other forecasting template (L2.4, L2.5) uses. We report both
+so the reader can pick the comparison that suits their question. The
+collapse to $\le 4\,\%$ for **both** TSFMs under exact match is itself
+informative: it confirms the gap is a property of the **scorer**, not of
+either model. Either re-running the LLM scorer with the $R/12$ margin or
+shipping the margin in the released dataset would close it.
+
+### 4.4 Per-item score distribution
+
+```{python}
+#| label: fig-distribution
+#| fig-cap: "TimesFM-2.5: per-item score histograms. Same bimodal shape as Chronos-Bolt — items predominantly land at 0.0 or 1.0, with smaller mass at the 0.5 half-credit band."
+Image("timesfm_fig_distribution.png")
+```
+
+### 4.5 Comparison to LLMs
+
+Per-template LLM scores are not stored in this checkout (`output/replies/` is
+not committed), so we report the level-aggregate LLM numbers from the paper
+alongside the per-template TSFM numbers. The same caveat applies as in the
+Chronos appendix: the LLM L1 aggregate averages over six L1 templates of
+which only L1.7 is shared with the TSFMs.
+
+| Model | L1.7 (CC) | L1 (level CC) | L2.4 (CC) | L2.5 (CC) | L2 (level CC) |
+|---|---|---|---|---|---|
+| TimesFM-2.5 (200M, zero-shot) | **0.563** | n/a (1/6 templ.) | **0.469** | **0.501** | n/a (2/6 templ.) |
+| Chronos-Bolt (200M, zero-shot) | 0.515 | n/a (1/6 templ.) | 0.469 | 0.497 | n/a (2/6 templ.) |
+| Claude Sonnet 4.6 (LLM) | ? | 0.468 | ? | ? | 0.471 |
+| Qwen3-235B (LLM) | ? | rank 2 | ? | ? | 0.436 |
+| Mistral Large 3 (LLM) | ? | 0.346 | ? | ? | 0.317 |
+| GPT-5.1 (LLM) | ? | $\le$ Mistral | ? | ? | $\le$ Mistral |
+| DeepSeek V3.2 (LLM) | ? | 0.250 | ? | ? | 0.291 |
+| Qwen3-4B (LLM) | ? | 0.218 | ? | ? | 0.275 |
+| Simple baseline | ? | 0.284 | ? | ? | ? |
+
+LLM numbers from the main paper Discussion (Section 7). All scores are
+chance-corrected. A strict per-template re-score of the LLM panel would
+likely show LLMs **below** both TSFMs on L1.7, consistent with the paper's
+finding that LLMs struggle with precise numerical state extraction at L1.
+
+### 4.6 Breakdown by signal type
+
+```{python}
+#| label: fig-signal-breakdown
+#| fig-cap: "TimesFM-2.5: score by signal category. Speed and torque/effort signals are predicted slightly more accurately than position and contact force, but all four categories sit well above chance (0.25). The pattern broadly tracks Chronos-Bolt's, with TimesFM showing a modestly larger gap between the speed and contact-force buckets."
+Image("timesfm_fig_signal_breakdown.png")
+```
+
+```{python}
+#| label: tbl-signal
+#| echo: false
+rows = []
+for cat, v in sorted(T_TIMES["signal_breakdown"].items()):
+    row = {"Category": cat, "n": v["n"], "TimesFM raw": f"{v['raw_mean']:.3f}"}
+    if T_CHRON is not None:
+        c = T_CHRON["signal_breakdown"].get(cat, {})
+        row["Chronos raw"] = f"{c.get('raw_mean', 0):.3f}" if c else "—"
+    rows.append(row)
+pd.DataFrame(rows)
+```
+
+### 4.7 Breakdown by horizon
+
+```{python}
+#| label: fig-horizon-breakdown
+#| fig-cap: "TimesFM-2.5: score versus forecast horizon. Same monotone-decay pattern as Chronos-Bolt: ~0.78–0.82 at horizons 1–2, dropping to ~0.54–0.58 at horizons 8–10. The gap between TimesFM and Chronos is largest at short horizons (where TimesFM is slightly more accurate) and closes at long horizons."
+Image("timesfm_fig_horizon_breakdown.png")
+```
+
+```{python}
+#| label: tbl-horizon
+#| echo: false
+rows = []
+for h, v in sorted(T_TIMES["horizon_breakdown"].items(), key=lambda x: int(x[0])):
+    row = {"Horizon (steps)": h, "n": v["n"], "TimesFM raw": f"{v['raw_mean']:.3f}"}
+    if T_CHRON is not None:
+        c = T_CHRON["horizon_breakdown"].get(h, {})
+        row["Chronos raw"] = f"{c.get('raw_mean', 0):.3f}" if c else "—"
+    rows.append(row)
+pd.DataFrame(rows)
+```
+
+### 4.8 Inference performance
+
+```{python}
+#| label: tbl-perf
+#| echo: false
+rows = [
+    {"Field": "Items processed", "Value": T_TIMES["n_total"]},
+    {"Field": "Total inference time (s)", "Value": T_TIMES["total_inference_time_s"]},
+    {"Field": "Mean per-item (s)", "Value": T_TIMES["timing"]["mean_per_item_s"]},
+    {"Field": "Median per-item (s)", "Value": T_TIMES["timing"]["median_per_item_s"]},
+    {"Field": "Max per-item (s)", "Value": T_TIMES["timing"]["max_per_item_s"]},
+    {"Field": "Model", "Value": T_TIMES["model"]},
+    {"Field": "Device", "Value": T_TIMES["device"]},
+    {"Field": "Parameters", "Value": "≈200 M"},
+]
+pd.DataFrame(rows)
+```
+
+TimesFM-2.5 is roughly $4\times$ slower per item than Chronos-Bolt on this
+hardware (median 0.11 s vs 0.03 s), almost certainly because each TimesFM
+forward pass operates over a larger fixed-length compiled graph. Both
+TSFMs run **2–3 orders of magnitude faster than running an LLM panel
+through the same items**, which makes either a cheap standing reference
+number for future versions of the benchmark.
+
+## 5. Fairness analysis — is this apples to apples?
+
+This section mirrors §4 of the Chronos-Bolt notebook
+(`report_full.qmd`) and addresses the same dimensions for TimesFM-2.5. The
+asymmetries between either TSFM and the LLM panel are, by design, the same
+because we hold parsing, scoring, and chance correction fixed across the
+two TSFM runs.
+
+### 5.1 What IS comparable (apples to apples)
+
+- **Same Q&A items.** TimesFM-2.5 answers the exact same 469 questions
+  drawn from the same test split.
+- **Same scoring rule.** Identical margin-based piecewise scorer with the
+  same chance correction ($E=1/4$).
+- **Same zero-shot setting.** No fine-tuning for either TimesFM-2.5 or the
+  LLMs.
+- **Same ground truth.** The actual future signal value from each episode.
+- **TimesFM-2.5 vs Chronos-Bolt is *fully* apples-to-apples.** Items,
+  parsing, scorer, chance correction, bootstrap, and L1.7 margin are all
+  held fixed; only the model changes.
+
+### 5.2 What is NOT comparable to the LLM panel
+
+The biggest asymmetry is the **input representation**:
+
+- **LLMs** receive the time series as **text tokens**:
+  `t=0.0: fbp0=1.50, fbs1=0.20, ...`. Values are rounded to **2 decimal
+  places** (lossy), feature names are **acronymized**, and the full prompt
+  also includes the question text, robot description, acronym mapping, and
+  (for MCQ items) the option set. Token counts can run into the thousands.
+  LLMs **know what is being asked** and can reason linguistically about
+  it, including using the anomaly description on L2.4/L2.5 as a
+  conditioning variable.
+- **TimesFM-2.5** receives **raw float32 arrays per channel** at full
+  precision, with no acronym decoding, no question text, no robot
+  context, and no anomaly description. It runs **independently per
+  channel** (univariate). Cross-channel reasoning is not available.
+
+This cuts both ways:
+
+| Dimension | Advantage |
+|---|---|
+| Numeric precision (raw float vs 2dp text) | **TimesFM-2.5** |
+| Question awareness (knows what is asked) | **LLMs** |
+| Anomaly context (L2.4/L2.5: knows what fault is present) | **LLMs** |
+| Cross-channel reasoning (multivariate) | **LLMs** |
+| Pretraining on real time-series data | **TimesFM-2.5** |
+
+### 5.3 Template coverage asymmetry
+
+TimesFM-2.5 answers **3 of 21** templates. LLM scores in the paper are
+aggregated across **all** templates per level. The LLM L1 score
+(e.g.\ Claude at 46.8 %) includes L1.1, L1.2, L1.3, L1.5, L1.6, *and*
+L1.7 — not just L1.7. TimesFM-2.5's L1 number is **L1.7 only**. These are
+not directly comparable as "L1 scores." We always label TimesFM-2.5
+results as template-specific (L1.7, L2.4, L2.5), never as level-wide.
+
+### 5.4 The L1.7 margin caveat
+
+Detailed in §4.3. In short: L1.7 items in the released dataset don't carry
+a stored margin, so the LLM scorer falls through to exact match. The TSFM
+appendix evaluates both conventions and reports both numbers. Until either
+the dataset stores the $R/12$ margin or the LLM scorer is re-run with it,
+the L1.7 head-to-head between TSFMs and LLMs is not strictly apples-to-apples
+under the strict scoring; the *internal* TSFM head-to-head between
+Chronos-Bolt and TimesFM-2.5 is fully apples-to-apples regardless of
+which convention is chosen, because both TSFMs are scored under the same
+convention.
+
+### 5.5 Verdict
+
+This is a **controlled comparison on a shared subset of templates with
+identical scoring**, not a head-to-head on the full benchmark. The
+comparison is informative precisely because it now triangulates between
+two pretrained forecasters: the TimesFM-2.5 numbers tell us that the
+Chronos-Bolt result is not a single-model artefact, while the TSFM-vs-LLM
+comparison still sits behind the input-representation and template-coverage
+caveats. Both pieces of evidence are needed.
+
+## 6. Interpretation
+
+### 6.1 What the results mean for the paper
+
+The TimesFM-2.5 numbers reinforce the three messages from the Chronos
+appendix and add one new one.
+
+1. **Reinforced.** A 200 M-parameter pretrained forecaster, evaluated zero-shot
+   on the FactoryBench forecasting templates, is competitive with the best LLM
+   panel level-aggregate scores: TimesFM-2.5 chance-corrected scores of
+   0.56 / 0.47 / 0.50 sit at or above the Claude Sonnet 4.6 L1/L2 aggregates
+   (0.47 / 0.47).
+2. **Reinforced.** A pure forecaster covers only 3 of 21 templates regardless of
+   which TSFM we pick — the structural limitation is not an artefact of
+   Chronos-Bolt's specific architecture or training data.
+3. **Reinforced.** L1.7 under the strict exact-match LLM-fallback scorer
+   produces $\le 4\,\%$ raw accuracy for both Chronos and TimesFM, confirming
+   that the missing L1.7 margin is a scoring-pipeline issue rather than a
+   model-capability issue.
+4. **New.** The agreement between the two TSFMs on the per-signal and
+   per-horizon breakdowns (very similar shapes, modest TimesFM lead at short
+   horizons) suggests the FactoryBench forecasting items have a model-class
+   intrinsic difficulty that is not strongly modulated by which TSFM we pick.
+   This is a small additional piece of evidence that the benchmark is
+   measuring a stable property of the items rather than a quirk of one model.
+
+### 6.2 Why this strengthens the paper
+
+The TimesFM-2.5 baseline is the second piece of the response to that
+reviewer's TSFM critique. Together with the Chronos-Bolt baseline it lets
+the paper make three quantitative claims it could not previously support
+with numbers:
+
+- **Some pretrained forecaster is competitive with frontier LLMs on the
+  forecasting slice of FactoryBench.** The Chronos-Bolt result alone made
+  this claim defensible; TimesFM-2.5 alone would also have made it
+  defensible. Having both makes it robust to the choice of TSFM.
+- **The result is not a property of one model.** Two independently
+  developed, architecturally distinct, separately pretrained TSFMs of the
+  same parameter scale converge to within bootstrap CI overlap on every
+  template, with the same shape of per-signal and per-horizon profile.
+  This is the kind of cross-model consistency check that hardens an
+  otherwise circumstantial claim.
+- **The 14 % template ceiling is structural, not architectural.** Both
+  TSFMs can only address 3 of 21 templates, because that is the
+  forecasting subset of FactoryBench. The benchmark's value is precisely
+  that it spans capabilities beyond forecasting; the rest of the templates
+  measure something deeper than next-step prediction. Adding a third or
+  fourth TSFM does not change this.
+
+### 6.3 Limitations of this baseline
+
+- Two TSFMs is more than one but still a small sample of the design space.
+  Moment, Lag-Llama, and Moirai (in particular Moirai-MoE, which is
+  multivariate) are obvious follow-ups using the same parsing and scoring
+  pipeline.
+- Univariate forecasting per channel: TimesFM-2.5 has no native multivariate
+  mode, so for L2.5 we run six independent per-joint forecasts, exactly as
+  in Chronos-Bolt. A multivariate TSFM might exploit cross-joint
+  correlations that we explicitly disable.
+- Short context: FactoryBench items are 32–77 timesteps; both TSFMs were
+  trained on contexts up to 512, so this baseline likely under-uses each
+  model's effective receptive field.
+- L1.7 margin discrepancy from §4.3 / §5.4: until either the dataset stores
+  the $R/12$ margin or the LLM scorer is re-run with it, the L1.7 row
+  should be read in pairs (one row per scoring convention).
+- TimesFM-specific deployment friction: the upstream PyPI package is
+  pinned to Python $<$ 3.12 by `paxml`/`lingvo`. We install from source.
+  If the official wheel catches up, the runner can be simplified.
+- We use TimesFM-2.5's **point forecast** as the prediction (vs Chronos's
+  median quantile). For Chronos-Bolt the point forecast and the median
+  quantile are the same series; for TimesFM the point forecast is what
+  the model emits as its canonical scalar prediction, while the quantile
+  head carries 10 separate predictions. We keep the point forecast for
+  consistency with the published TimesFM API; reading the median quantile
+  (`out[1][:,:,5]`) produces numerically very similar results in spot
+  checks but we have not characterised the difference at the population
+  level.
+
+## 7. Reproducibility
+
+```bash
+# Same data files as the Chronos run.
+cd experiments/v1
+python download_data.py
+python run_timesfm.py \
+    --input data/level_1_test.jsonl data/level_2_test.jsonl \
+    --max-per-template 999999 \
+    --output results_timesfm.json \
+    --device cuda
+python analyze.py --results results_timesfm.json --prefix timesfm_
+quarto render report_timesfm.qmd
+```
+
+End-to-end on a single A10G: under two minutes including model load.
+
+Artifacts:
+
+- `results_timesfm.json` — per-item predictions + scores (469 items)
+- `timesfm_analysis_summary.json` — aggregates, CIs, breakdowns
+- `report_timesfm.html` — this notebook rendered
+- `timesfm_fig_*.png` — plots embedded above

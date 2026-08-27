@@ -1,0 +1,447 @@
+[
+  {
+    "anomaly_name": "tcp_force_spike",
+    "description": "Abrupt, short-duration spike in TCP wrench (force and or torque).",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "speed_drop_with_force_spike",
+    "description": "Measured joint speeds drop abruptly at the same time as a TCP force spike (typical collision signature).",
+    "relevant_features_from_schema": [
+      "feedback_speed_{axis}",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "protective_stop_state"
+    ]
+  },
+  {
+    "anomaly_name": "vibration_burst",
+    "description": "Short transient burst of high acceleration at the tool.",
+    "relevant_features_from_schema": [
+      "vibration_0",
+      "vibration_1",
+      "vibration_2",
+      "true_force_{i}",
+      "est_contact_force_{i}"
+    ]
+  },
+  {
+    "anomaly_name": "acoustic_spike",
+    "description": "Sudden increase in acoustic emission indicating impact, slip, chatter, or tool interaction.",
+    "relevant_features_from_schema": [
+      "acoustic_0",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2"
+    ]
+  },
+  {
+    "anomaly_name": "high_current_low_motion",
+    "description": "Motor current rises while measured joint speed remains low or near zero, indicating resistance or stall-like behavior.",
+    "relevant_features_from_schema": [
+      "effort_current_{axis}",
+      "feedback_speed_{axis}",
+      "feedback_pos_{axis}",
+      "setpoint_speed_{axis}",
+      "setpoint_pos_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "protective_stop_event",
+    "description": "Protective stop becomes active, often after contact or safety limit violations.",
+    "relevant_features_from_schema": [
+      "protective_stop_state",
+      "safety_mode",
+      "feedback_speed_{axis}",
+      "true_force_{i}",
+      "est_contact_force_{i}"
+    ]
+  },
+  {
+    "anomaly_name": "persistent_tracking_error",
+    "description": "Sustained deviation between commanded motion and measured motion (position and or speed).",
+    "relevant_features_from_schema": [
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}",
+      "setpoint_speed_{axis}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "reduced_contact_force",
+    "description": "Measured contact force is abnormally low during a phase where contact is expected (for example, tightening without engaging).",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "effort_current_{axis}",
+      "feedback_speed_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "unexpected_low_current_during_tightening",
+    "description": "Motor current remains unusually low during a tightening phase where torque demand is expected to rise.",
+    "relevant_features_from_schema": [
+      "effort_current_{axis}",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "feedback_speed_{axis}",
+      "setpoint_speed_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "acoustic_spike_without_force",
+    "description": "Acoustic emission increases without a corresponding force spike, suggesting slip or chatter rather than hard contact.",
+    "relevant_features_from_schema": [
+      "acoustic_0",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2"
+    ]
+  },
+  {
+    "anomaly_name": "misalignment_signature",
+    "description": "Pattern consistent with off-axis insertion, often showing intermittent force pulses, micro-stalls, and small tracking errors.",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}",
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2"
+    ]
+  },
+  {
+    "anomaly_name": "under_tightening_signature",
+    "description": "Tightening completes without reaching expected force or torque build-up, indicating insufficient engagement or premature stop.",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "effort_current_{axis}",
+      "feedback_speed_{axis}",
+      "protective_stop_state"
+    ]
+  },
+  {
+    "anomaly_name": "spurious_speed_spike",
+    "description": "Isolated unrealistic spike in measured joint speed, typically from logging or communication artifacts.",
+    "relevant_features_from_schema": ["feedback_speed_{axis}", "timestamp_ms"]
+  },
+  {
+    "anomaly_name": "spurious_current_spike",
+    "description": "Isolated unrealistic spike in motor current not supported by motion or force context.",
+    "relevant_features_from_schema": [
+      "effort_current_{axis}",
+      "feedback_speed_{axis}",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "timestamp_ms"
+    ]
+  },
+  {
+    "anomaly_name": "spurious_force_spike",
+    "description": "Isolated unrealistic spike in force sensor data inconsistent with motion, vibration, or current.",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "feedback_speed_{axis}",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2",
+      "timestamp_ms"
+    ]
+  },
+  {
+    "anomaly_name": "unexpected_safety_mode_change",
+    "description": "Safety mode changes unexpectedly, potentially due to configuration, safety limits, or controller state transitions.",
+    "relevant_features_from_schema": [
+      "safety_mode",
+      "protective_stop_state",
+      "main_voltage",
+      "feedback_speed_{axis}",
+      "true_force_{i}"
+    ]
+  },
+  {
+    "anomaly_name": "sustained_contact_force",
+    "description": "Contact forces remain elevated for an extended interval, indicating prolonged contact or high process resistance.",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "effort_current_{axis}",
+      "feedback_speed_{axis}",
+      "joint_temp_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "gradual_current_force_temperature_rise",
+    "description": "Slow concurrent increase in motor current, TCP force, and joint temperature during continued operation.",
+    "relevant_features_from_schema": [
+      "effort_current_{axis}",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "joint_temp_{axis}",
+      "timestamp_ms"
+    ]
+  },
+  {
+    "anomaly_name": "reduced_speed_under_high_setpoint",
+    "description": "Measured joint speed is significantly lower than commanded speed for a sustained period.",
+    "relevant_features_from_schema": [
+      "setpoint_speed_{axis}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}",
+      "main_voltage",
+      "joint_temp_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "oscillation_around_setpoint",
+    "description": "Feedback position or speed oscillates around the commanded trajectory with periodic behavior.",
+    "relevant_features_from_schema": [
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}",
+      "setpoint_speed_{axis}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "position_jump_without_motion",
+    "description": "Sudden discontinuity in measured joint position without consistent supporting speed or force context.",
+    "relevant_features_from_schema": [
+      "feedback_pos_{axis}",
+      "feedback_speed_{axis}",
+      "timestamp_ms"
+    ]
+  },
+  {
+    "anomaly_name": "joint_overheating",
+    "description": "Joint temperature exceeds typical levels or rises abnormally fast, often with elevated current.",
+    "relevant_features_from_schema": [
+      "joint_temp_{axis}",
+      "effort_current_{axis}",
+      "feedback_speed_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "voltage_drop",
+    "description": "Main voltage falls below nominal range or shows abnormal dips correlated with degraded performance.",
+    "relevant_features_from_schema": [
+      "main_voltage",
+      "effort_current_{axis}",
+      "feedback_speed_{axis}",
+      "safety_mode"
+    ]
+  },
+  {
+    "anomaly_name": "force_estimation_mismatch",
+    "description": "Estimated TCP wrench and true measured TCP wrench diverge beyond normal tolerance.",
+    "relevant_features_from_schema": [
+      "est_contact_force_{i}",
+      "true_force_{i}",
+      "feedback_speed_{axis}",
+      "effort_current_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "noisy_force_signal",
+    "description": "Force sensor readings exhibit abnormal high-frequency noise or jitter relative to expected dynamics.",
+    "relevant_features_from_schema": [
+      "true_force_{i}",
+      "timestamp_ms",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2",
+      "acoustic_0"
+    ]
+  },
+  {
+    "anomaly_name": "increasing_rms_vibration",
+    "description": "Vibration energy gradually increases over time, suggesting wear or loosening.",
+    "relevant_features_from_schema": [
+      "vibration_0",
+      "vibration_1",
+      "vibration_2",
+      "acoustic_0",
+      "timestamp_ms"
+    ]
+  },
+  {
+    "anomaly_name": "joint_current_imbalance",
+    "description": "One joint shows consistently abnormal current relative to other joints for similar commanded motion.",
+    "relevant_features_from_schema": [
+      "effort_current_{axis}",
+      "setpoint_speed_{axis}",
+      "feedback_speed_{axis}",
+      "setpoint_pos_{axis}",
+      "feedback_pos_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "gripper_close_no_force",
+    "description": "Gripper is commanded closed but contact force signatures indicate no object engagement.",
+    "relevant_features_from_schema": [
+      "gripper_command",
+      "true_force_{i}",
+      "est_contact_force_{i}",
+      "acoustic_0",
+      "vibration_0",
+      "vibration_1",
+      "vibration_2"
+    ]
+  },
+  {
+    "anomaly_name": "torque_sensor_elevation",
+    "description": "Torque sensor readings at one or more axes are persistently elevated above the expected profile for the commanded motion, indicating increased mechanical resistance or external loading.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "motor_torque_{axis}",
+      "motor_iq_{axis}",
+      "target_torque_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "motor_iq_elevation",
+    "description": "The torque-forming current component Iq at one or more axes is elevated above the expected level for the given commanded motion, indicating increased mechanical load or friction.",
+    "relevant_features_from_schema": [
+      "motor_iq_{axis}",
+      "torque_sensor_a_{axis}",
+      "target_velocity_{axis}",
+      "joint_velocity_{axis}",
+      "power_motor_el_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "motor_electrical_power_elevation",
+    "description": "Electrical power consumption at one or more axes is elevated without a proportional increase in mechanical output power, indicating reduced motor efficiency.",
+    "relevant_features_from_schema": [
+      "power_motor_el_{axis}",
+      "power_motor_mech_{axis}",
+      "motor_iq_{axis}",
+      "motor_id_{axis}",
+      "motor_voltage_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "motor_id_elevation",
+    "description": "The magnetizing current component Id at one or more axes is elevated, indicating a shift in the commutation phase that reduces torque-forming efficiency without necessarily increasing measured torque.",
+    "relevant_features_from_schema": [
+      "motor_id_{axis}",
+      "motor_iq_{axis}",
+      "power_motor_el_{axis}",
+      "motor_voltage_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "iq_id_ratio_anomaly",
+    "description": "The ratio between the torque-forming current Iq and the magnetizing current Id deviates from the expected value, indicating commutation misalignment. In normal operation Id should be near zero; elevation relative to Iq is the key signature.",
+    "relevant_features_from_schema": [
+      "motor_iq_{axis}",
+      "motor_id_{axis}",
+      "motor_torque_{axis}",
+      "power_motor_el_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "increased_computed_inertia",
+    "description": "Computed inertia at one or more axes is elevated above the nominal range for the current joint configuration, indicating an unexpected additional mass in the kinematic chain.",
+    "relevant_features_from_schema": [
+      "computed_inertia_{axis}",
+      "computed_torque_{axis}",
+      "target_acceleration_{axis}",
+      "torque_sensor_a_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "payload_torque_absence",
+    "description": "Torque profiles during the transport phase show no evidence of payload loading. Expected gravity and inertia contributions from the carried object are absent across all axes.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "computed_torque_{axis}",
+      "motor_torque_{axis}",
+      "motor_iq_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "abrupt_torque_drop",
+    "description": "A sudden sharp decrease in torque sensor readings at one or more axes occurring mid-motion, indicating an abrupt loss of payload or contact force.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "motor_torque_{axis}",
+      "joint_velocity_{axis}",
+      "computed_torque_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "sustained_low_torque",
+    "description": "Torque sensor readings remain consistently below the expected level for a given motion phase over an extended period, indicating absence of expected payload or contact load.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "motor_torque_{axis}",
+      "computed_torque_{axis}",
+      "target_torque_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "torque_deviation_from_nominal",
+    "description": "Torque profiles across one or more axes deviate from the expected distribution for the commanded motion. Deviation may be positive or negative depending on whether the payload is heavier or lighter than nominal.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "motor_torque_{axis}",
+      "computed_torque_{axis}",
+      "target_torque_{axis}",
+      "motor_iq_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "pose_dependent_torque_anomaly",
+    "description": "Torque elevation at affected axes that varies with joint angle configuration rather than being constant, indicating a load whose effect depends on arm pose such as a cable applying varying tension as the arm moves.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "joint_position_{axis}",
+      "motor_iq_{axis}",
+      "computed_torque_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "torque_profile_temporal_shift",
+    "description": "The expected torque patterns for each motion phase occur at different times than nominal, indicating that the robot is executing an atypical joint trajectory due to an unusual approach or gripping configuration.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "joint_position_{axis}",
+      "target_position_{axis}",
+      "motor_iq_{axis}"
+    ]
+  },
+  {
+    "anomaly_name": "broadband_torque_noise",
+    "description": "Torque sensor and joint velocity signals exhibit elevated noise across all frequency bands, consistent with mechanical vibrations transmitted from an unstable mounting surface into the robot structure.",
+    "relevant_features_from_schema": [
+      "torque_sensor_a_{axis}",
+      "torque_sensor_b_{axis}",
+      "joint_velocity_{axis}",
+      "motor_velocity_{axis}",
+      "motor_iq_{axis}"
+    ]
+  }
+]

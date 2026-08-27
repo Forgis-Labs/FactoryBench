@@ -1,0 +1,17 @@
+Design a clean, publication-quality illustration of Pearl's three-rung ladder of causation, adapted to an industrial robot arm (the FactoryBench domain). The figure is a vertical stack of three panels sharing a consistent visual grammar, same robot, same workspace, same signal plot style, so the reader can focus on what changes between rungs.
+
+Visual system (shared across all panels):
+
+Left half of each panel: a stylized 6-DOF robot arm performing a pick-and-place task, with a payload and a workbench. Use a flat, technical line-art style (navy outlines on a light background, single accent color per rung).
+Right half: a compact multivariate time-series plot showing two signals, commanded setpoint S (joint torque, orange) and measured effort E (green), over ~500 ms. This plot is the visual anchor: what it shows evolves rung by rung.
+Left margin: a large vertical arrow labeled "Increasing Causal Depth" spanning all three panels, matching the overview figure in the paper.
+Each panel is a rounded rectangle with a subtle colored border/tint matching the L1/L2/L3 palette already used in Figure 1 (L1 light orange #FB9E6C, L2 mid orange #FF7F3A, L3 deep orange #FF5A00).
+Panel 1, L1 · Seeing (Association). Icon: an eye. Robot arm shown operating normally. Plot: observed traces of S and E, with a question bracket on a segment where E deviates. Tag line: "I observe that when the payload is heavier, motor current is higher." Formal label: P(E | S, C). Subtitle: "Correlation from passive observation, no action taken."
+
+Panel 2, L2 · Doing (Intervention). Icon: a hand / wrench. Same robot, but now a bold orange arrow labeled do(S := S*) is shown injecting a commanded change (e.g., +20% torque setpoint at t = 200 ms). Plot: the S trace is forcibly altered at the intervention timestamp (marked with a vertical dashed line), and E responds accordingly. Tag line: "If I command +20% torque now, the motor current will rise to ~X A." Formal label: P(E | do(S)). Subtitle: "Predicting the effect of an action at the present timestep."
+
+Panel 3, L3 · Imagining (Counterfactual). Icon: a ghost / dashed silhouette. Show the same real robot trajectory that actually happened (solid lines) alongside a translucent "ghost" robot and ghost trajectory (dashed lines) representing the alternate history. Plot: two overlaid traces of E, the factual one (solid green) and the counterfactual one (dashed green), branching from a past intervention timestamp (e.g., t = 20 ms, marked). Tag line: "Given what actually happened, if torque had been raised to X at t = 20 ms instead, the arm would have stalled here." Formal label: P(E_{S=x} | S=s, E=e). Subtitle: "Reasoning over alternative histories, conditioned on what we observed."
+
+Below the three panels: a thin horizontal strip mapping each rung to the FactoryBench level it evaluates (L1 → State, L2 → Intervention, L3 → Counterfactual) and to the ground-truth source (sensor data · present-state simulation · past-state simulation). Add a small note: "FactoryBench's Level 4 (Decision) builds on all three rungs."
+
+Style: NeurIPS-ready, flat vector, sans-serif (e.g., Inter or Source Sans), consistent stroke weights, minimal shadows, brand palette (orange #FF5A00, navy #122128, green #2ECC71, blue #3A7BD5). No photorealism, no clutter. The reader should understand all three rungs in under ten seconds.

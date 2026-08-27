@@ -1,0 +1,135 @@
+# FactoryBench / ur5 / pick_and_place - task configuration (shared schema)
+# All values match the original ur5/run.py hardcoded constants exactly.
+
+robot:
+  name: "ur5"
+  prim: "/World/ur5"
+  eef_prim: "/World/ur5/wrist_3_link/flange"
+  home_joints: [0.00, -1.00, 0.90, -1.4708, -1.5708, 0.00]
+  robot_usd: "/Isaac/Robots/UniversalRobots/ur5/ur5.usd"
+  rmpflow_name: "UR5"
+
+  gripper:
+    usd: "assets/robotiq_2f_85/robotiq_2f_85.usd"
+    prim: "/World/ur5/robotiq"
+    base_link: "robotiq_arg2f_base_link"
+    close_deg_base: 56.0
+    close_deg_max: 68.0
+    tcp_z: 0.150
+    pad_friction: 1.2
+    grip_kp_range: [5000.0, 12000.0]
+    grip_joint_indices: [6, 7, 8, 9, 10, 11]
+    grip_kp: 1000.0
+    grip_kd: 50.0
+    max_effort: 1000.0
+    mimic_joints:
+      - { name: "right_outer_knuckle_joint", gearing: -1.0 }
+      - { name: "left_inner_knuckle_joint",  gearing: -1.0 }
+      - { name: "right_inner_knuckle_joint", gearing: -1.0 }
+      - { name: "left_inner_finger_joint",   gearing:  1.0 }
+      - { name: "right_inner_finger_joint",  gearing:  1.0 }
+    finger_pad_links:
+      - "left_inner_finger_pad"
+      - "right_inner_finger_pad"
+      - "left_inner_finger"
+      - "right_inner_finger"
+      - "left_outer_finger"
+      - "right_outer_finger"
+
+scene:
+  cube_prim: "/World/pick_cube"
+  conveyor_nominal: [0.55, 0.00, 0.04]
+  conveyor_xy_range: 0.08
+  bin_position: [0.00, -0.45, 0.10]
+  table_height: 0.10
+
+  workcell:
+    floor_size: [4.0, 4.0]
+    rubber_mat_pos: [0.0, 0.70, 0.002]
+    rubber_mat_size: [1.2, 0.7, 0.004]
+    table:
+      center_x: 0.55
+      top_size: [0.70, 0.60, 0.012]
+      leg_spread: [0.30, 0.27]
+      mount_plate_size: [0.22, 0.22, 0.01]
+    conveyor:
+      center: [0.55, 0.00]
+      length: 0.60
+      width: 0.28
+      num_rollers: 9
+    bin:
+      width: 0.28
+      depth: 0.28
+      height: 0.12
+      wall_thickness: 0.003
+      stand_leg_spread: 0.13
+    fence:
+      height: 1.2
+      posts:
+        - [-0.80, -0.70]
+        - [ 0.10, -0.70]
+        - [ 1.00, -0.70]
+        - [ 1.00, -0.10]
+        - [ 1.00,  0.55]
+        - [-0.80,  0.55]
+      panels_back:
+        - { pos: [-0.35, -0.70], width: 0.86 }
+        - { pos: [ 0.55, -0.70], width: 0.86 }
+      panels_right:
+        - { pos: [1.00, -0.40], depth: 0.56 }
+        - { pos: [1.00,  0.225], depth: 0.61 }
+      panels_left:
+        - { pos: [-0.80, -0.30], depth: 0.76 }
+      rail_back:  { pos: [ 0.10, -0.70], width: 1.84 }
+      rail_right: { pos: [ 1.00, -0.075], depth: 1.29 }
+      rail_left:  { pos: [-0.80, -0.30], depth: 0.84 }
+    cabinet:
+      position: [-0.70, -0.50]
+    estop:
+      position: [-0.65, 0.38]
+    tape_markings:
+      front: { pos: [0.0, -0.52], width: 1.10 }
+      right: { pos: [0.62, 0.0], depth: 1.10 }
+      left:  { pos: [-0.62, -0.12], depth: 0.85 }
+    lights:
+      - [0.25, 0.0]
+      - [-0.25, -0.25]
+      - [0.60, -0.40]
+      - [0.0, 0.30]
+
+  controller:
+    end_effector_initial_height: 0.42
+    events_dt: [0.008, 0.005, 0.04, 0.008, 0.008, 0.004, 0.008, 0.10, 0.016, 0.012]
+
+physics:
+  sim_dt: 0.016667
+
+domain_randomization:
+  cube_mass_range:        [0.10, 0.80]
+  cube_friction_range:    [0.40, 0.60]
+  cube_restitution_range: [0.00, 0.20]
+  cube_dim_w_range:       [0.020, 0.055]
+  cube_dim_d_range:       [0.020, 0.065]
+  cube_dim_h_range:       [0.020, 0.065]
+
+noise:
+  perception_xy_std: 0.002
+  perception_z_std:  0.001
+  joint_std:         0.002
+
+control:
+  grasp_xy_threshold: 0.12
+
+logging:
+  log_dir: "logs"
+
+slip_detection:
+  drift_threshold: 0.003
+
+episode:
+  timeout_s: 60.0
+  drop_z_threshold: -0.15
+  bin_xy_tolerance: 0.14
+  bin_z_tolerance: 0.12
+  settle_steps: 30
+  init_steps: 10

@@ -1,0 +1,98 @@
+[
+  {
+    "id": 6,
+    "name": "Payload Addition",
+    "description": "an increase of {x} kg to the payload",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "x": "numeric"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Friction Decrease Injection",
+    "description": "a decrease of {reduction_pct}% in the friction coefficient",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "reduction_pct": "numeric"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Motor Miscommutation Injection",
+    "description": "a commutation phase offset of {phase_offset_deg} degrees on {motor}",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "motor": "string",
+      "phase_offset_deg": "numeric"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Gripper Activation Failure Injection",
+    "description": "activation failure of gripper {gripper}",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "gripper": "string"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Gripper Release Injection",
+    "description": "mid-motion payload release by gripper {gripper}",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "gripper": "string",
+      "release_time": "numeric"
+    }
+  },
+  {
+    "id": 16,
+    "name": "Collision Injection",
+    "description": "a collision with {object} ({impact_impulse} N-s impact impulse)",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "object": "string",
+      "impact_impulse": "numeric",
+      "trajectory_fraction": "numeric"
+    }
+  },
+  {
+    "id": 17,
+    "name": "Foam Collision",
+    "description": "a collision with a foam cube at {trajectory_fraction} of the trajectory",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "trajectory_fraction": "numeric"
+    }
+  },
+  {
+    "id": 18,
+    "name": "Cardboard Collision",
+    "description": "a collision with a cardboard box at {trajectory_fraction} of the trajectory",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "trajectory_fraction": "numeric",
+      "braced": "boolean"
+    }
+  },
+  {
+    "id": 19,
+    "name": "Cable Collision",
+    "description": "a collision with a hanging cable at {trajectory_fraction} of the trajectory",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "trajectory_fraction": "numeric"
+    }
+  },
+  {
+    "id": 20,
+    "name": "Peg Misalignment",
+    "description": "a {offset_type} offset of {offset_value} in the peg insertion approach",
+    "tasks": ["peg_in_hole"],
+    "variables": {
+      "offset_type": "string",
+      "offset_value": "numeric"
+    }
+  }
+]

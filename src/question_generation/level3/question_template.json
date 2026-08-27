@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "type": "predictive",
+    "template": "Given the baseline sensor stream below and the counterfactual scenario where {event}, rank the signal segments listed in the 'options' field in the order you would expect them to appear as the event manifests. Answer only with a four letter string indicating your ranking (ie. DCAB), nothing else.",
+    "answer_format": {
+      "type": "ranking",
+      "n_items": 4,
+      "notes": "Model must output a permutation of [A, B, C, D]. Chunks should be kept short to limit token cost. The correct ordering reflects causal propagation delay across signals."
+    },
+    "important_features": [
+      "feedback_pos_0",
+      "feedback_pos_1",
+      "feedback_pos_2",
+      "feedback_pos_3",
+      "feedback_pos_4",
+      "feedback_pos_5",
+      "feedback_speed_0",
+      "feedback_speed_1",
+      "feedback_speed_2",
+      "feedback_speed_3",
+      "feedback_speed_4",
+      "feedback_speed_5",
+      "effort_target_torque_0",
+      "effort_target_torque_1",
+      "effort_target_torque_2",
+      "effort_target_torque_3",
+      "effort_target_torque_4",
+      "effort_target_torque_5",
+      "est_contact_force_0",
+      "est_contact_force_1",
+      "est_contact_force_2",
+      "est_contact_force_3",
+      "est_contact_force_4",
+      "est_contact_force_5",
+      "setpoint_tcp_0",
+      "setpoint_tcp_1",
+      "setpoint_tcp_2",
+      "setpoint_tcp_3",
+      "setpoint_tcp_4",
+      "setpoint_tcp_5"
+    ]
+  },
+  {
+    "id": 2,
+    "type": "intervention_outcome",
+    "template": "Given the counterfactual scenario where {event}, what would most likely happen next? Answer only with a 4 letter string using F and T to indicate your answers (ie. TFFT to indicate True, False, False, True). Do not output anything else.",
+    "answer_format": {
+      "type": "multiple_choice_multi_select",
+      "n_choices": 4,
+      "fixed_options": [
+        "mc_0019"
+      ],
+      "notes": "One correct consequence, one plausible-but-wrong distractor, one unrelated distractor, and one 'nothing extraordinary happens' option. Target ~30% of generated instances where the correct answer IS 'nothing extraordinary happens'."
+    }
+  },
+  {
+    "id": 3,
+    "type": "trajectory_outcome_multiselect",
+    "template": "Given the counterfactual scenario where {event}, select all statements that would apply. Answer only with a 4 letter string using F and T to indicate your answers (ie. TFFT to indicate True, False, False, True). Do not output anything else.",
+    "answer_format": {
+      "type": "multiple_choice_multi_select",
+      "fixed_options": [],
+      "notes": "Always include both fixed statements (one or both may be correct depending on the scenario). Add 2 random additional statements with a 50/50 correct/incorrect split. mc_003 tests sharp speed drop, mc_004 tests stable speeds \u00e2\u20ac\u201d they are natural opposites."
+    }
+  },
+  {
+    "id": 4,
+    "type": "predictive",
+    "template": "In the counterfactual scenario where {event}, what would be the expected value of {signal} at T+{n}ms? Answer only with an integer or decimal number, nothing else.",
+    "answer_format": {
+      "type": "numerical",
+      "notes": "Single float value with unit. Accept answers within a tolerance band."
+    },
+    "important_features": [
+      "feedback_pos_0",
+      "feedback_pos_1",
+      "feedback_pos_2",
+      "feedback_pos_3",
+      "feedback_pos_4",
+      "feedback_pos_5",
+      "setpoint_pos_0",
+      "setpoint_pos_1",
+      "setpoint_pos_2",
+      "setpoint_pos_3",
+      "setpoint_pos_4",
+      "setpoint_pos_5",
+      "feedback_speed_0",
+      "feedback_speed_1",
+      "feedback_speed_2",
+      "feedback_speed_3",
+      "feedback_speed_4",
+      "feedback_speed_5",
+      "effort_target_torque_0",
+      "effort_target_torque_1",
+      "effort_target_torque_2",
+      "effort_target_torque_3",
+      "effort_target_torque_4",
+      "effort_target_torque_5",
+      "est_contact_force_0",
+      "est_contact_force_1",
+      "est_contact_force_2",
+      "est_contact_force_3",
+      "est_contact_force_4",
+      "est_contact_force_5"
+    ]
+  },
+  {
+    "id": 5,
+    "type": "predictive",
+    "template": "In the counterfactual scenario where {event}, what would be the expected values of {joint_signal} at T+{n}ms? Answer only with a list of 6 numbers (integer or decimal) formatted as a JSON array, ie. [10.2,9,2.1,1,7,0.21]. Do not return anything else.",
+    "answer_format": {
+      "type": "tensor",
+      "shape": [
+        6
+      ],
+      "notes": "A 6-element vector of floats, one per joint axis (0-indexed). Format as a JSON array."
+    },
+    "important_features": [
+      "feedback_pos_0",
+      "feedback_pos_1",
+      "feedback_pos_2",
+      "feedback_pos_3",
+      "feedback_pos_4",
+      "feedback_pos_5",
+      "setpoint_pos_0",
+      "setpoint_pos_1",
+      "setpoint_pos_2",
+      "setpoint_pos_3",
+      "setpoint_pos_4",
+      "setpoint_pos_5",
+      "feedback_speed_0",
+      "feedback_speed_1",
+      "feedback_speed_2",
+      "feedback_speed_3",
+      "feedback_speed_4",
+      "feedback_speed_5",
+      "setpoint_speed_0",
+      "setpoint_speed_1",
+      "setpoint_speed_2",
+      "setpoint_speed_3",
+      "setpoint_speed_4",
+      "setpoint_speed_5",
+      "effort_target_torque_0",
+      "effort_target_torque_1",
+      "effort_target_torque_2",
+      "effort_target_torque_3",
+      "effort_target_torque_4",
+      "effort_target_torque_5"
+    ]
+  }
+]

@@ -1,0 +1,148 @@
+# FactoryBench / franka / screwing  -  task configuration (shared schema)
+# Franka Panda + Factory M16 nut-bolt threading task.
+#
+# Based on the Factory paper (RSS 2022) and IsaacLab Factory tasks.
+# The robot holds an M16 nut in its gripper and threads it onto a fixed
+# M16 bolt.  Thread engagement is achieved through SDF contact physics
+# on the Factory threaded mesh assets.
+
+robot:
+  name: "franka"
+  prim: "/World/franka"
+  eef_prim: "/World/franka/panda_hand"
+  home_joints: [0.00871, -0.10368, -0.00794, -1.49139, -0.00083, 1.38774, 0.0]
+  robot_usd: "assets/factory/franka_mimic.usd"
+  rmpflow_name: "Franka"
+  wrist_link: "panda_hand"
+  num_arm_joints: 7
+
+  gripper:
+    builtin: true
+    joint_prim_names: ["panda_finger_joint1", "panda_finger_joint2"]
+    joint_opened_positions: [0.04, 0.04]
+    joint_closed_positions: [0.0, 0.0]
+    use_mimic_joints: false
+    tcp_z: 0.1034               # distance from panda_hand to fingertip center
+    grip_joint_indices: [7, 8]
+    grip_kp: 7500.0
+    grip_kd: 173.0
+    max_effort: 40.0
+    eef_prim: "/World/franka/panda_rightfinger"
+
+scene:
+  # Nut (M16, held by gripper, threaded onto bolt)
+  nut_prim: "/World/nut"
+  nut_usd: "assets/factory/factory_nut_m16.usd"
+  # Bolt (M16, fixed on table)
+  bolt_prim: "/World/bolt"
+  bolt_usd: "assets/factory/factory_bolt_m16.usd"
+
+  # Bolt initial position (on table surface)
+  bolt_position: [0.6, 0.0, 0.05]
+  bolt_position_noise: [0.05, 0.05, 0.0]
+
+  table_height: 0.0
+
+  # Nut-bolt geometry (M16)
+  nut_diameter: 0.024          # 24 mm across flats
+  nut_height: 0.01             # 10 mm thick
+  nut_mass: 0.03
+  nut_friction: 0.01
+  bolt_diameter: 0.024
+  bolt_height: 0.025           # 25 mm shank
+  bolt_base_height: 0.01       # 10 mm head
+  bolt_mass: 0.05
+  bolt_friction: 0.75
+  thread_pitch: 0.002          # 2 mm per revolution (M16 coarse)
+
+  controller:
+    end_effector_initial_height: 0.25
+    # Phase timings for the nut-threading sequence:
+    #   0: approach_bolt, move above bolt with nut in gripper
+    #   1: descend, lower nut onto bolt shank
+    #   2: settle, wait for contact to establish
+    #   3: thread_cw, apply downward force + CW rotation
+    #   4: disengage, open gripper, lift
+    #   5: retract, retract to home height
+    events_dt: [0.006, 0.004, 0.02, 0.001, 0.02, 0.010]
+
+  workcell:
+    floor_size: [4.0, 4.0]
+    rubber_mat_pos: [0.0, 0.70, 0.002]
+    rubber_mat_size: [1.2, 0.7, 0.004]
+    table:
+      center_x: 0.55
+      top_size: [0.70, 0.60, 0.012]
+      leg_spread: [0.30, 0.27]
+      mount_plate_size: [0.22, 0.22, 0.01]
+    fence:
+      height: 1.2
+      posts:
+        - [-0.80, -0.70]
+        - [ 0.10, -0.70]
+        - [ 1.00, -0.70]
+        - [ 1.00, -0.10]
+        - [ 1.00,  0.55]
+        - [-0.80,  0.55]
+      panels_back:
+        - { pos: [-0.35, -0.70], width: 0.86 }
+        - { pos: [ 0.55, -0.70], width: 0.86 }
+      panels_right:
+        - { pos: [1.00, -0.40], depth: 0.56 }
+        - { pos: [1.00,  0.225], depth: 0.61 }
+      panels_left:
+        - { pos: [-0.80, -0.30], depth: 0.76 }
+      rail_back:  { pos: [ 0.10, -0.70], width: 1.84 }
+      rail_right: { pos: [ 1.00, -0.075], depth: 1.29 }
+      rail_left:  { pos: [-0.80, -0.30], depth: 0.84 }
+    cabinet:
+      position: [-0.70, -0.50]
+    estop:
+      position: [-0.65, 0.38]
+    tape_markings:
+      front: { pos: [0.0, -0.52], width: 1.10 }
+      right: { pos: [0.62, 0.0], depth: 1.10 }
+      left:  { pos: [-0.62, -0.12], depth: 0.85 }
+    lights:
+      - [0.25, 0.0]
+      - [-0.25, -0.25]
+      - [0.60, -0.40]
+      - [0.0, 0.30]
+
+physics:
+  sim_dt: 0.008333             # 1/120, matches Factory
+  solver_position_iterations: 192
+  solver_velocity_iterations: 1
+  gpu_max_rigid_contact_count: 8388608
+  gpu_collision_stack_size: 268435456
+  friction_offset_threshold: 0.01
+  friction_correlation_distance: 0.00625
+  bounce_threshold_velocity: 0.2
+
+domain_randomization:
+  bolt_pos_noise: [0.05, 0.05, 0.0]
+  bolt_orn_noise_deg: 30.0
+  nut_grip_pos_noise: [0.0, 0.003, 0.003]
+  hand_init_pos_noise: [0.02, 0.02, 0.01]
+  hand_init_orn_noise_rad: [0.0, 0.0, 0.26]
+
+noise:
+  perception_xy_std: 0.001
+  perception_z_std: 0.001
+  joint_std: 0.0
+
+control:
+  screw_angular_vel: 1.5       # rad/s, wrist rotation during threading
+  screw_downward_force: 3.0    # N, downward force during threading
+  gripper_close_width: 0.0     # fully closed
+  gripper_open_width: 0.04     # fully open
+
+logging:
+  log_dir: "logs"
+
+episode:
+  timeout_s: 30.0
+  success_threshold: 0.375     # fraction of thread_pitch for success
+  engage_threshold: 0.5        # fraction of thread_pitch for engagement
+  settle_steps: 30
+  init_steps: 10

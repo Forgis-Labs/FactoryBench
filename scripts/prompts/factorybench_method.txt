@@ -1,0 +1,30 @@
+FactoryBench is a Q&A benchmark for evaluating LLM agents on machine understanding over industrial time-series data from collaborative robots.
+
+Problem: existing benchmarks target textual reasoning, code generation, or generic multimodal understanding. No benchmark rigorously evaluates machine-centered, time-series reasoning across causal levels, from reading sensor values to generating troubleshooting procedures grounded in technical manuals.
+
+Four-level evaluation hierarchy:
+- Level 1, State: interpret the current machine state. Detect anomalies, identify operational modes, recognize sensor patterns. Ground truth comes from direct sensor readings. Example: "What is the current of joint 3 at t=250ms?"
+- Level 2, Intervention: reason about consequences of present-timestep actions. Predict the immediate impact of control changes or faults as they arise. Ground truth comes from simulation with state injection. Example: "If force on joint 3 increases to 12N now, what happens?"
+- Level 3, Counterfactual: simulate alternative past timelines. Assess how outcomes would differ under hypothetical conditions at a previous timestep. Ground truth comes from simulation with past-state replay. Example: "If force had risen to 12N at t=20ms, what would have happened?"
+- Level 4, Decision Making: generate multi-step troubleshooting, optimization, or recovery procedures. Requires integration of sensor data, causal reasoning, and technical manuals. Ground truth comes from manual and sensor fusion. Example: "Robot stopped with error C203A. What recovery steps are needed?"
+- Design principle: each level builds on the previous. Failure at Level N implies failure at Level N+1.
+
+Data and causal schema (SCE):
+- Setpoint (S): the controller's command, target position, velocity, and acceleration per joint axis.
+- Context (C): physical conditions affecting behavior, payload, temperature, material properties. Split into static (episode metadata) and dynamic (per-timestep columns).
+- Effort + Feedback (E): the machine's actual response, motor current (effort), actual position (feedback), vibration, acoustic emission.
+- Fault definition: under healthy operation, Effort = f(Setpoint). Faults manifest as deviations in this relationship.
+- Data sources: FactoryWave (custom dense dataset from UR-series robots), open-source datasets (AURSAD UR3e, voraus-AD UR5), and simulations.
+
+Scalable Q&A generation pipeline:
+- 80 structured question templates designed by PhD-level robotics experts, each probing one specific reasoning capability.
+- Variable sampling fills template slots at generation time: continuous variables (signal names, timestamps, thresholds) from episode data, discrete variables (tasks, anomaly types, root causes) from curated vocabularies.
+- Ground truth is deterministic, computed directly from labeled episode data, never imputed or inferred.
+- Three answer formats: Multi-Select True/False (4 statements, exact match), Ranking (permutation ordering, Kendall's τ), and Tensor Prediction (scalar values, MAPE).
+- Semantic diversity enforced via Vendi Score across parameter variation, format variation, and template/type variation.
+
+Evaluation setup:
+- Frontier LLMs (GPT-4o, Gemini-2.5-Pro, Claude-3.5-Sonnet), specialized time-series methods (Chronos, Moirai, FD-LLM), and baselines (random, rule-based, human expert).
+- Tool-augmented agents: LLMs with access to time-series prediction and anomaly detection modules.
+- Expected performance degrades sharply across levels: L1 85–95%, L2 60–75%, L3 35–50%, L4 15–30% for current LLMs. Human experts reach 99%, 95%, 90%, 80%.
+- Hypothesis: semantic priors (robot manuals, expert rules) show largest gains at Level 4 decision making.

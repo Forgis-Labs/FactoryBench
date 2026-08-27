@@ -1,0 +1,28 @@
+{
+  "brand": {
+    "tiger":    "#FF5A00",
+    "fire":     "#FF4D00",
+    "flicker":  "#DC4B07",
+    "steel":    "#878F92",
+    "gunmetal": "#122128",
+    "panel":    "#202E35"
+  },
+  "figure": {
+    "dark_navy":        "#122128",
+    "brand_orange":    "#FF5A00",
+    "brand_fire":      "#FF4D00",
+    "brand_flicker":   "#DC4B07",
+    "blue":             "#3A7BD5",
+    "green":            "#2ECC71",
+    "steel":            "#878F92",
+    "panel_bg":         "#F0F4F8",
+    "warm_amber":       "#FFF3CD",
+    "white":            "#FFFFFF"
+  },
+  "levels": {
+    "L1": { "label": "State",          "bg": "#E0F2F1", "border": "#00796B" },
+    "L2": { "label": "Intervention",   "bg": "#FFF8E1", "border": "#F57F17" },
+    "L3": { "label": "Counterfactual", "bg": "#F3E5F5", "border": "#6A1B9A" },
+    "L4": { "label": "Decision",       "bg": "#FFEBEE", "border": "#B71C1C" }
+  }
+}

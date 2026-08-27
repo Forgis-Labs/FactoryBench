@@ -1,0 +1,130 @@
+[
+  {
+    "id": 1,
+    "type": "troubleshooting",
+    "template": "Given the sensor stream below, does the machine show signs of anomalous behavior? If yes, identify the most likely root cause and describe the steps you would take to fix it.",
+    "answer_format": {
+      "type": "free_form",
+      "notes": "Expected answer covers three parts: (1) anomaly present or not, (2) root cause identification if anomalous, (3) ordered remediation steps. Scalable via troubleshooting instruction databases and root-cause-to-action mappings. Evaluated with LLM-as-Judge against a reference answer derived from the root cause and anomaly labels."
+    }
+  },
+  {
+    "id": 2,
+    "type": "optimization",
+    "template": "An engineer wants to increase the effectiveness and accuracy of this machine. Based on the sensor stream below, what operational changes or parameter adjustments could help achieve this? Do not justify your answer, simply indicate steps to take (or specify if nothing can be done).",
+    "answer_format": {
+      "type": "free_form",
+      "notes": "Expected answer identifies sub-optimal operating conditions visible in the sensor stream and proposes actionable adjustments (e.g., speed, payload, trajectory tuning). Scalable by recording episodes with deliberately sub-optimal parameters alongside their optimized counterparts, using the delta as a reference. Evaluated with LLM-as-Judge against a reference derived from the known parameter gap."
+    },
+    "important_features": [
+      "effort_current_0",
+      "effort_current_1",
+      "effort_current_2",
+      "effort_current_3",
+      "effort_current_4",
+      "effort_current_5",
+      "effort_target_current_0",
+      "effort_target_current_1",
+      "effort_target_current_2",
+      "effort_target_current_3",
+      "effort_target_current_4",
+      "effort_target_current_5",
+      "feedback_tcp_0",
+      "feedback_tcp_1",
+      "feedback_tcp_2",
+      "feedback_tcp_3",
+      "feedback_tcp_4",
+      "feedback_tcp_5",
+      "true_force_0",
+      "true_force_1",
+      "true_force_2",
+      "true_force_3",
+      "true_force_4",
+      "true_force_5"
+    ]
+  },
+  {
+    "id": 3,
+    "type": "optimization",
+    "template": "The 4 sensor streams below each correspond to a complete task execution padded to a common length. Consider only the task completion portion of each stream (up to the end of the final task phase) when assessing duration. Rank them from shortest to longest task duration. Answer only with a four letter string indicating your ranking (e.g. DCAB), nothing else.",
+    "answer_format": {
+      "type": "ranking",
+      "n_items": 4,
+      "notes": "Model must output a permutation of the episode labels (A, B, ..., N). Ground truth ranking is derived from the episode-level duration metadata field recorded during trajectory optimization blocks. Evaluate by comparing the predicted permutation to the ground truth; accept exact match or compute Kendall's tau for partial credit."
+    },
+    "important_features": [
+      "effort_current_0",
+      "effort_current_1",
+      "effort_current_2",
+      "effort_current_3",
+      "effort_current_4",
+      "effort_current_5",
+      "effort_target_current_0",
+      "effort_target_current_1",
+      "effort_target_current_2",
+      "effort_target_current_3",
+      "effort_target_current_4",
+      "effort_target_current_5",
+      "feedback_tcp_0",
+      "feedback_tcp_1",
+      "feedback_tcp_2",
+      "feedback_tcp_3",
+      "feedback_tcp_4",
+      "feedback_tcp_5",
+      "feedback_speed_0",
+      "feedback_speed_1",
+      "feedback_speed_2",
+      "feedback_speed_3",
+      "feedback_speed_4",
+      "feedback_speed_5",
+      "feedback_pos_0",
+      "feedback_pos_1",
+      "feedback_pos_2",
+      "feedback_pos_3",
+      "feedback_pos_4",
+      "feedback_pos_5"
+    ]
+  },
+  {
+    "id": 4,
+    "type": "optimization",
+    "template": "The 4 sensor streams below each correspond to a complete task execution padded to a common length. Consider only the task completion portion of each stream (up to the end of the final task phase) when assessing energy consumption. Rank them from most to least energy-efficient. Answer only with a four letter string indicating your ranking (e.g. DCAB), nothing else.",
+    "answer_format": {
+      "type": "ranking",
+      "n_items": 4,
+      "notes": "Model must output a permutation of the episode labels (A, B, ..., N). Ground truth ranking is derived from the episode-level energy metadata field (total joint energy in joules) recorded during trajectory optimization blocks. Evaluate by comparing the predicted permutation to the ground truth; accept exact match or compute Kendall's tau for partial credit."
+    },
+    "important_features": [
+      "effort_current_0",
+      "effort_current_1",
+      "effort_current_2",
+      "effort_current_3",
+      "effort_current_4",
+      "effort_current_5",
+      "effort_target_current_0",
+      "effort_target_current_1",
+      "effort_target_current_2",
+      "effort_target_current_3",
+      "effort_target_current_4",
+      "effort_target_current_5",
+      "feedback_tcp_0",
+      "feedback_tcp_1",
+      "feedback_tcp_2",
+      "feedback_tcp_3",
+      "feedback_tcp_4",
+      "feedback_tcp_5",
+      "feedback_speed_0",
+      "feedback_speed_1",
+      "feedback_speed_2",
+      "feedback_speed_3",
+      "feedback_speed_4",
+      "feedback_speed_5",
+      "robot_current",
+      "true_force_0",
+      "true_force_1",
+      "true_force_2",
+      "true_force_3",
+      "true_force_4"
+    ]
+  }
+]

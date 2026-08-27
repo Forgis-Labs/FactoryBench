@@ -1,0 +1,108 @@
+[
+  {
+    "id": 2,
+    "name": "Transient Spike",
+    "description": "a sudden spike in {feature_i} of magnitude {delta}",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "feature_i": "string",
+      "delta": "numeric",
+      "duration": "integer"
+    },
+    "variable_constraints": {
+      "feature_i": [
+        "effort_current_0", "effort_current_1", "effort_current_2",
+        "effort_current_3", "effort_current_4", "effort_current_5",
+        "est_contact_force_0", "est_contact_force_1", "est_contact_force_2",
+        "est_contact_force_3", "est_contact_force_4", "est_contact_force_5",
+        "effort_target_torque_0", "effort_target_torque_1", "effort_target_torque_2",
+        "effort_target_torque_3", "effort_target_torque_4", "effort_target_torque_5",
+        "vibration_0", "vibration_1", "vibration_2", "vibration_3", "vibration_4",
+        "acoustic_0",
+        "robot_current"
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "name": "Transient Dip",
+    "description": "a sudden dip in {feature_i} of magnitude {delta}",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "feature_i": "string",
+      "delta": "numeric",
+      "duration": "integer"
+    },
+    "variable_constraints": {
+      "feature_i": [
+        "effort_current_0", "effort_current_1", "effort_current_2",
+        "effort_current_3", "effort_current_4", "effort_current_5",
+        "feedback_speed_0", "feedback_speed_1", "feedback_speed_2",
+        "feedback_speed_3", "feedback_speed_4", "feedback_speed_5",
+        "est_contact_force_0", "est_contact_force_1", "est_contact_force_2",
+        "est_contact_force_3", "est_contact_force_4", "est_contact_force_5",
+        "tool_momentum",
+        "robot_voltage",
+        "main_voltage"
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "name": "Payload Addition",
+    "description": "an increase of {x} kg to the payload",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "x": "numeric"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Friction Decrease Injection",
+    "description": "a {delta} fractional reduction of friction on cube and gripper pads",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "delta": "numeric"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Motor Miscommutation Injection",
+    "description": "a commutation phase offset of {phase_offset_deg} degrees on {motor}",
+    "tasks": ["pick_and_place", "screwing"],
+    "variables": {
+      "motor": "string",
+      "phase_offset_deg": "numeric"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Gripper Activation Failure Injection",
+    "description": "activation failure of gripper {gripper}",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "gripper": "string"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Gripper Release Injection",
+    "description": "mid-motion payload release by gripper {gripper}",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "gripper": "string",
+      "release_time": "numeric"
+    }
+  },
+  {
+    "id": 16,
+    "name": "Collision Injection",
+    "description": "a collision with {object} at {impact_impulse} kg·m/s impulse",
+    "tasks": ["pick_and_place"],
+    "variables": {
+      "object": "string",
+      "impact_impulse": "numeric",
+      "trajectory_fraction": "numeric"
+    }
+  }
+]

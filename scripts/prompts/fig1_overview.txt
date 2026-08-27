@@ -1,0 +1,141 @@
+Generate a publication-quality academic figure for a NeurIPS 2026 benchmark paper
+called "FactoryBench". This is the main overview figure (Figure 1) and must communicate
+in a single glance: what data goes in, how it is structured, what the benchmark
+evaluates, and why existing benchmarks leave a gap. White background, flat design,
+clean sans-serif typography (Inter or Helvetica Neue).
+
+The figure has a LEFT-TO-RIGHT horizontal flow with FOUR columns connected by
+thick dark navy arrows.
+(wide landscape). ALL text must match exactly what is specified. Do not add,
+remove, or rephrase any text.
+
+═══════════════════════════════════════════════════════════════
+COLUMN 1, DATA SOURCES
+═══════════════════════════════════════════════════════════════
+Header label: "Data Sources"
+
+Three vertically stacked rounded cards with an icon area on the left, and text on the right:
+
+Card 1:
+  Icon: small stylized waveform symbol
+  Title bold: "FactoryWave"
+  Subtitle: "Custom dense dataset\nUR5e & UR10e robots"
+
+Card 2:
+  Icon: small open-source / globe symbol
+  Title bold: "Open-Source"
+  Subtitle: "AURSAD (UR3e)\nvoraus-AD (UR5)"
+
+Card 3:
+  Icon: small sine-wave / simulation symbol
+  Title bold: "Synthetic"
+  Subtitle: "Simulated faults\n& edge cases"
+
+═══════════════════════════════════════════════════════════════
+COLUMN 2, INPUTS & CAUSAL SCHEMA
+═══════════════════════════════════════════════════════════════
+Header label in bold dark navy: "Inputs"
+
+This column has TWO vertically stacked sections:
+
+- Section A: Sensor Data (SCE Schema)
+
+Contains THREE horizontally arranged mini-cards inside, each with a
+colored top bar and centered text:
+
+Mini-card S:
+  Bold: "S"
+  Below: "Setpoint"
+  Small gray: "Target position,\nvelocity, acceleration"
+
+Mini-card C:
+  Bold: "C"
+  Below: "Context"
+  Small gray: "Payload, temperature,\nmaterial properties"
+
+Mini-card E:
+  Bold: "E"
+  Below: "Effort + Feedback"
+  Small gray: "Motor current,\nactual position, vibration"
+
+Below the three mini-cards, a small formula line in italic dark navy:
+"Healthy: E = f(S)  |  Fault: deviation from E = f(S)"
+
+--- Section B: Semantic Priors ---
+A smaller rounded rectangle below Section A.
+Inner content:
+  Left icon: small book/manual symbol
+  Bold: "Semantic Priors"
+  Below: "Technical manuals, error code tables,"
+  Below: "maintenance procedures (e.g., UR5e manual)"
+
+A dashed arrow labeled "fusion" connects Section A and Section B downward
+into a single thick arrow pointing right toward Column 3.
+
+═══════════════════════════════════════════════════════════════
+COLUMN 3, Q&A BENCHMARK ENGINE
+═══════════════════════════════════════════════════════════════
+Header label in bold dark navy: "Q&A Benchmark"
+
+A single large rounded rectangle containing a vertical stack of three items:
+
+Item 1, rounded pill shape:
+  Bold: "80 Expert Templates"
+  Small gray: "PhD-authored, each probes\none reasoning capability"
+
+Item 2, rounded pill shape:
+  Bold: "Variable Sampling"
+  Small gray: "Signals, timestamps,\nthresholds from episodes"
+
+Item 3, rounded pill shape:
+  Bold: "Deterministic Ground Truth"
+  Small gray: "Computed from labeled data,\nnever imputed"
+
+Small downward arrows connect each item to the next.
+A thick rightward arrow exits the box toward Column 4.
+
+═══════════════════════════════════════════════════════════════
+COLUMN 4, FOUR EVALUATION LEVELS
+═══════════════════════════════════════════════════════════════
+Header label in bold dark navy: "Evaluation Levels"
+
+FOUR vertically stacked rounded rectangles forming a descending staircase.
+Each box has a colored left accent bar, colored background, bold title,
+italic subtitle, and a small example question in quotes on the right side.
+An upward arrow on the left side of the stack is labeled:
+"Increasing causal depth  →  Decreasing LLM accuracy"
+
+Box L1:
+  Title bold: "L1, State"
+  Subtitle italic: "Interpret current machine state"
+  Example right-aligned, small, in quotes:
+  "What is the current of joint 3 at t=250ms?"
+
+Box L2:
+  Title bold: "L2, Intervention"
+  Subtitle italic: "Predict impact of present actions"
+  Example in quotes: "If force on joint 3 increases to 12N now, what happens?"
+
+Box L3:
+  Title bold: "L3, Counterfactual"
+  Subtitle italic: "Simulate alternative past timelines"
+  Example in quotes: "If force had risen to 12N at t=20ms, what would have happened?"
+
+Box L4:
+  Title bold: "L4, Decision Making"
+  Subtitle italic: "Generate multi-step troubleshooting"
+  Example in quotes: "Robot stopped with error C203A. Recovery steps?"
+
+Below the four boxes, a small annotation:
+"Design principle: success at Level N requires Level N−1"
+
+═══════════════════════════════════════════════════════════════
+BOTTOM BANNER, MOTIVATION
+═══════════════════════════════════════════════════════════════
+Below the entire figure, a thin horizontal divider line, then
+a single-line bold italic caption:
+
+"Figure 1: FactoryBench overview, a Q&A benchmark evaluating LLM agents
+on causal machine understanding over industrial time-series data, from
+reading sensor values (L1) to generating troubleshooting procedures (L4)."
+

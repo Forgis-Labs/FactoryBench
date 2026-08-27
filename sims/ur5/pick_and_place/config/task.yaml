@@ -1,0 +1,42 @@
+# FactoryBench / ur5 / pick_and_place  -  task configuration
+
+robot:
+  prim:          "/World/ur5"
+  eef_prim:      "/World/ur5/wrist_3_link/flange"
+  urdf_cfg:      "config/ur5.yml"
+  home_joints:   [0.00, -1.00, 0.90, -1.4708, -1.5708, 0.00]
+  home_position: [0.40, 0.00, 0.35]
+
+scene:
+  cube_prim:          "/World/pick_cube"
+  conveyor_nominal:   [0.55, 0.00, 0.04]
+  conveyor_xy_range:  0.08
+  bin_position:       [0.00, -0.45, 0.10]
+
+physics:
+  sim_dt:  0.016667
+  gravity: [0.0, 0.0, -9.81]
+
+domain_randomization:
+  cube_mass_range:        [0.10, 0.80]
+  cube_friction_range:    [0.40, 0.60]
+  cube_restitution_range: [0.00, 0.20]
+  cube_dim_w_range:       [0.020, 0.055]
+  cube_dim_d_range:       [0.020, 0.065]
+  cube_dim_h_range:       [0.020, 0.065]
+
+noise:
+  perception_xy_std: 0.002
+  perception_z_std:  0.001
+  joint_std:         0.002
+
+control:
+  suction_radius:  0.08
+  pre_offset_z:    0.15
+  attach_offset_z: 0.03
+  lift_offset_z:   0.15
+  place_offset_z:  0.15
+
+
+logging:
+  log_dir: "logs"

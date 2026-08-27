@@ -1,0 +1,20 @@
+# Container manifest, not a project manifest.
+#
+# This directory is the `source_dir` of the training and eval jobs, and
+# SageMaker pip-installs this file into the job container before
+# train_factorybench.py / eval_factorybench.py run. torch, numpy and the rest
+# of the base stack already ship in the PyTorch training image, so only the
+# additions are listed.
+#
+# flash-attn is optional: both the trainer and BearingModel probe it with a
+# try/except and fall back to the default attention implementation. It is
+# listed because the checkpoints train materially faster with it, and it is
+# the one entry here that can fail to build on a machine without CUDA
+# toolchain headers. Drop it locally if a dry run will not install.
+#
+# The project-level equivalent is `pip install -e ".[finetune]"`.
+peft
+accelerate
+transformers>=4.45
+huggingface-hub
+flash-attn
