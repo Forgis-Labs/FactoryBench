@@ -1,8 +1,12 @@
 """Chance-correction for FactoryBench raw scores.
 
 Maps a raw item score $s \\in [0,1]$ to a chance-corrected score
-$\\tilde{s} = \\max(0, (s - E) / (1 - E))$, where $E$ is the expected
-score under random guessing for that item's answer format.
+$\\tilde{s} = (s - E) / (1 - E)$, where $E$ is the expected score under
+random guessing for that item's answer format. The transform is SIGNED: an
+item scoring below chance receives $\\tilde{s} < 0$, with per-format floor
+$\\tilde{s}_{min} = -E/(1-E)$. It is not floored at zero -- flooring destroys
+the property that zero means chance, which is the whole point of the
+correction.
 
 After correction, $\\tilde{s} = 0$ corresponds to pure-chance performance
 and $\\tilde{s} = 1$ to perfect performance for every format, so per-level
@@ -103,8 +107,9 @@ def chance_correct(
         return 1.0 if float(raw_score) >= 1.0 else 0.0
     s = float(raw_score)
     corrected = (s - E) / (1.0 - E)
-    if corrected < 0.0:
-        return 0.0
+    # No lower clip: below-chance performance must stay negative. The upper
+    # guard is a no-op for well-formed input (s <= 1) and only catches a
+    # scorer that returned > 1.
     if corrected > 1.0:
         return 1.0
     return corrected

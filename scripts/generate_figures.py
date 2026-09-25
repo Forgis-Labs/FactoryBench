@@ -69,7 +69,10 @@ QTYPE_DISPLAY: Dict[str, str] = {
 
 LEVEL_LABELS = {1: "L1\nNumerical", 2: "L2\nMCQ", 3: "L3\nMulti-MCQ", 4: "L4\nFree-Form"}
 
-# Conservative default chance scores per format
+_WARNED_E: List[int] = []
+
+# FALLBACK ONLY, for replies predating the per-item 'chance_e' field.
+# src/evaluation/chance_correct.py is the source of truth.
 CHANCE_E: Dict[str, float] = {
     "numerical":                     0.25,
     "multiple_choice_single_select": 0.25,
@@ -115,11 +118,31 @@ def _effective_score(reply: dict) -> Optional[float]:
     return None if s is None else float(s)
 
 
-def _chance_correct(score: float, af: str) -> float:
-    E = CHANCE_E.get(af, 0.0)
+def _chance_correct(score: float, af: str, chance_e: float | None = None) -> float:
+    """Signed chance correction, matching src/evaluation/chance_correct.py.
+
+    Two defects lived here: the result was floored at zero, so below-chance
+    scores rendered as 0; and E came from CHANCE_E, which hardcodes 0.25 for
+    single-select while the benchmark uses E = 1/k with k in {3, 4}. Together
+    they put every L1-L3 cell 2-3 points above the reported values.
+
+    Prefer the per-item ``chance_e`` recorded by the evaluation runner; the
+    CHANCE_E fallback warns, because it cannot tell k=3 from k=4.
+    """
+    if chance_e is None:
+        E = CHANCE_E.get(af, 0.0)
+        if af == "multiple_choice_single_select" and not _WARNED_E:
+            _WARNED_E.append(1)
+            print("WARNING: reply has no 'chance_e'; falling back to a "
+                  "hardcoded E=%.3f for single-select. k=3 items will be "
+                  "over-corrected." % E)
+    else:
+        E = float(chance_e)
     if E >= 1.0:
         return 1.0 if score >= 1.0 else 0.0
-    return max(0.0, min(1.0, (score - E) / (1.0 - E)))
+    corrected = (score - E) / (1.0 - E)
+    # Signed: no lower clip.
+    return min(1.0, corrected)
 
 
 def load_data(replies_root: pathlib.Path) -> pd.DataFrame:
@@ -149,7 +172,7 @@ def load_data(replies_root: pathlib.Path) -> pd.DataFrame:
                     "answer_format": af,
                     "question_type": qt,
                     "score":         s,
-                    "score_cc":      _chance_correct(s, af) if s is not None else None,
+                    "score_cc":      _chance_correct(s, af, r.get("chance_e")) if s is not None else None,
                     "judge_gpt":     (votes.get("gpt-5.1-1") or {}).get("score"),
                     "judge_sonnet":  (votes.get("claude-sonnet-4.6") or {}).get("score"),
                     "judge_deepseek":(votes.get("deepseek-v3.2") or {}).get("score"),
@@ -186,7 +209,9 @@ def fig_main_heatmap(df: pd.DataFrame, model_order: List[str], out_dir: pathlib.
     fig, ax = plt.subplots(figsize=(7, 4))
     sns.heatmap(
         matrix, annot=np.array(annot), fmt="",
-        cmap=BRAND_CMAP, vmin=0, vmax=100,
+        # vmin must not be 0: the correction is signed and below-chance cells
+        # are legitimately negative. Clamping at 0 hides them.
+        cmap=BRAND_CMAP, vmin=-25, vmax=100,
         linewidths=1.5, linecolor="white",
         cbar_kws={"label": "Chance-Corrected Accuracy (%)", "shrink": 0.8},
         ax=ax, mask=np.isnan(matrix))

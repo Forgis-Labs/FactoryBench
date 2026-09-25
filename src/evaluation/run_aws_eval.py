@@ -51,6 +51,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.evaluation.chance_correct import expected_chance_score
 from src.config import (
     AWS_REGION_DEFAULT,
     BEDROCK_MODELS,
@@ -362,6 +363,10 @@ def _write_reply(
         "score": score,
         "answer_format": answer_format,
         "question_type": question_type,
+        # Chance level for THIS item, resolved from the item itself (single-select
+        # is 1/k, ranking 1/n), so downstream consumers never have to guess it.
+        "chance_e": expected_chance_score(answer_format, qa_payload),
+        "n_options": len(qa_payload.get("options") or {}) or None,
         "model": model,
         "usage": usage,
         "estimated_cost": est_cost,
