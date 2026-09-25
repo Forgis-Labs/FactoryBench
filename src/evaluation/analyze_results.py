@@ -4,7 +4,7 @@ Generates:
   1. Per-model bar charts, accuracy by answer format
   2. Multi-model comparison heatmap, models (rows) x answer formats (columns)
 
-Style: NeurIPS paper format with project colours.
+Style: conference paper format with project colours.
 """
 from __future__ import annotations
 
@@ -49,8 +49,8 @@ FORMAT_LABELS = {
 FORMAT_ORDER = ["MCQ", "MCQ (Multi)", "Numerical", "Tensor", "Ranking", "Free Form"]
 
 
-# ── NeurIPS-style matplotlib defaults ─────────────────────────────────
-def set_neurips_style() -> None:
+# ── conference-style matplotlib defaults ─────────────────────────────────
+def set_paper_style() -> None:
     plt.rcParams.update({
         "font.family": "serif",
         "font.serif": ["Times New Roman", "DejaVu Serif", "serif"],
@@ -300,7 +300,7 @@ def main() -> None:
                         help="Apply per-format chance correction (max(0, (s-E)/(1-E))) before aggregating.")
     args = parser.parse_args()
 
-    set_neurips_style()
+    set_paper_style()
     args.figures_dir.mkdir(parents=True, exist_ok=True)
 
     question_map = build_question_map(args.questions)

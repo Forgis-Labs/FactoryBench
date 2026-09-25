@@ -14,4 +14,4 @@ Panel 3, L3 · Imagining (Counterfactual). Icon: a ghost / dashed silhouette. Sh
 
 Below the three panels: a thin horizontal strip mapping each rung to the FactoryBench level it evaluates (L1 → State, L2 → Intervention, L3 → Counterfactual) and to the ground-truth source (sensor data · present-state simulation · past-state simulation). Add a small note: "FactoryBench's Level 4 (Decision) builds on all three rungs."
 
-Style: NeurIPS-ready, flat vector, sans-serif (e.g., Inter or Source Sans), consistent stroke weights, minimal shadows, brand palette (orange #FF5A00, navy #122128, green #2ECC71, blue #3A7BD5). No photorealism, no clutter. The reader should understand all three rungs in under ten seconds.
+Style: the conference-ready, flat vector, sans-serif (e.g., Inter or Source Sans), consistent stroke weights, minimal shadows, brand palette (orange #FF5A00, navy #122128, green #2ECC71, blue #3A7BD5). No photorealism, no clutter. The reader should understand all three rungs in under ten seconds.

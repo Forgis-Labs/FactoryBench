@@ -44,22 +44,22 @@ Create a text file describing the figure inside `prompts/` (or anywhere), then:
 
 ```bash
 # Minimum: generate, compile, auto-fix any LaTeX errors
-python scripts/neurips_image_generator.py \
-    --prompt scripts/prompts/factorybench_neurips.txt
+python scripts/paper_figure_generator.py \
+    --prompt scripts/prompts/factorybench_paper.txt
 
 # With a project color palette injected into the prompt
-python scripts/neurips_image_generator.py \
-    --prompt scripts/prompts/factorybench_neurips.txt \
+python scripts/paper_figure_generator.py \
+    --prompt scripts/prompts/factorybench_paper.txt \
     --colors scripts/color_schema.json
 
 # Use GPT instead of Claude for TikZ generation
-python scripts/neurips_image_generator.py \
+python scripts/paper_figure_generator.py \
     --prompt scripts/prompts/fig1_overview.txt \
     --agent gpt
 
 # After compiling, render to PNG and run a visual-review loop
-python scripts/neurips_image_generator.py \
-    --prompt scripts/prompts/factorybench_neurips.txt \
+python scripts/paper_figure_generator.py \
+    --prompt scripts/prompts/factorybench_paper.txt \
     --colors scripts/color_schema.json \
     --visual-review --visual-iterations 2
 ```

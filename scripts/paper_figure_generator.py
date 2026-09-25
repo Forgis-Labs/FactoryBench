@@ -47,7 +47,7 @@ COST_TABLE = {
 # LLM system prompts
 
 TIKZ_SYSTEM = r"""You are an expert at writing publication-quality figures in TikZ/LaTeX
-for academic papers (NeurIPS, ICML, CVPR style).
+for academic papers (the conference, ICML, CVPR style).
 
 Given a text description of a figure, produce a COMPLETE, SELF-CONTAINED
 LaTeX document that renders the figure using TikZ/pgfplots.

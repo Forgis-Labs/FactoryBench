@@ -1,4 +1,4 @@
-Generate a publication-quality academic figure for a NeurIPS 2026 benchmark paper 
+Generate a publication-quality academic figure for a machine-learning benchmark paper 
 called "FactoryBench". White background, flat design, clean sans-serif typography 
 (Inter or Helvetica Neue). The figure has a strict left-to-right horizontal layout 
 with four main zones connected by thick dark navy arrows (#122128).

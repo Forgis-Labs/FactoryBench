@@ -1,4 +1,4 @@
-Generate a publication-quality academic figure for a NeurIPS 2026 benchmark paper
+Generate a publication-quality academic figure for a machine-learning benchmark paper
 called "FactoryBench". This figure (Figure 2) explains the scalable Q&A generation
 pipeline and its two core guarantees: (1) deterministic ground truth and
 (2) enforced semantic diversity via Vendi Score. The reader should understand how

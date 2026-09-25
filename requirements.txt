@@ -49,7 +49,7 @@ sagemaker>=2.235.0,<3
 opik>=1.3                  # trace logging: src/scoring/score_traces.py, run_foundry_eval.py
 streamlit>=1.38            # scripts/qa_review_app.py, the Q&A review UI
 kaggle>=1.6                # scripts-driven CNC download: src/data/data_installation/install_cnc.py
-pymupdf>=1.24              # --visual-review PNG rendering in scripts/neurips_image_generator.py
+pymupdf>=1.24              # --visual-review PNG rendering in scripts/paper_figure_generator.py
 
 # --- Agentic baseline (src/agentic/tools/forecast.py) -----------------------
 # The Chronos forecaster tool. torch is a hard requirement of chronos and is

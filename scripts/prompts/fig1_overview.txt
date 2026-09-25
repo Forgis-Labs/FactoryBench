@@ -1,4 +1,4 @@
-Generate a publication-quality academic figure for a NeurIPS 2026 benchmark paper
+Generate a publication-quality academic figure for a machine-learning benchmark paper
 called "FactoryBench". This is the main overview figure (Figure 1) and must communicate
 in a single glance: what data goes in, how it is structured, what the benchmark
 evaluates, and why existing benchmarks leave a gap. White background, flat design,

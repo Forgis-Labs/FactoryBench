@@ -118,7 +118,7 @@ sims/**/*.SLDASM
 sims/**/*.SLDPRT
 sims/assets/**/Renderings/
 
-# Default --outdir of scripts/neurips_image_generator.py
+# Default --outdir of scripts/paper_figure_generator.py
 scripts/outputs/
 
 # Local SageMaker eval/scoring artifacts (downloaded from S3, not source)

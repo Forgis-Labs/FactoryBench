@@ -195,7 +195,7 @@ def main():
     fig.savefig(out, bbox_inches="tight")
     print(f"saved {out}")
 
-    out_paper = repo / "docs/neurips_tex/figures/fig_l4_gpt51.pdf"
+    out_paper = repo / "docs/paper_tex/figures/fig_l4_gpt51.pdf"
     fig.savefig(out_paper, bbox_inches="tight")
     print(f"saved {out_paper}")
 

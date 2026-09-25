@@ -10,7 +10,7 @@ FactoryBench/FactoryBench, then renders two complementary figures:
                                        (root_cause field) across the released
                                        Q&A items.
 
-Output: docs/neurips_tex/figures/.
+Output: docs/paper_tex/figures/.
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ load_dotenv(r"./.env",
 REPO = "FactoryBench/FactoryBench"
 LEVELS = (1, 2, 3, 4)
 SPLITS = ("train", "validation", "test")
-OUT_DIR = pathlib.Path(__file__).resolve().parents[1] / "docs/neurips_tex/figures"
+OUT_DIR = pathlib.Path(__file__).resolve().parents[1] / "docs/paper_tex/figures"
 
 TIGER    = "#ff5a00"
 FLICKER  = "#DC4B07"

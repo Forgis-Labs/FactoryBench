@@ -7,7 +7,7 @@ the public HuggingFace dataset and emits a single PDF with:
   (b) Answer-format mix per level (four canonical buckets).
   (c) Sub-series length distribution per level.
 
-Output: docs/neurips_tex/figures/fig_qa_overview_3panel.pdf
+Output: docs/paper_tex/figures/fig_qa_overview_3panel.pdf
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ HF_REPO = "FactoryBench/FactoryBench"
 LEVELS = (1, 2, 3, 4)
 SPLITS = ("train", "validation", "test")
 
-OUT = REPO / "docs/neurips_tex/figures/fig_qa_overview_3panel.pdf"
+OUT = REPO / "docs/paper_tex/figures/fig_qa_overview_3panel.pdf"
 
 TIGER    = "#ff5a00"
 FLICKER  = "#DC4B07"

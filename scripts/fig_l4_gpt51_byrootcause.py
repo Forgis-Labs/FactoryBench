@@ -5,7 +5,7 @@ Two-panel figure with stacked horizontal bars. Each row is a specific
 ground-truth fault (L4.1) or misconfigured parameter (L4.2); the stack shows
 the {0, 0.5, 1} score distribution. n is annotated for each bar.
 
-Output: docs/neurips_tex/figures/fig_l4_gpt51_byrootcause.pdf
+Output: docs/paper_tex/figures/fig_l4_gpt51_byrootcause.pdf
 """
 from __future__ import annotations
 
@@ -221,7 +221,7 @@ def main():
 
     fig.tight_layout(rect=[0, 0, 1, 0.94])
 
-    out_paper = REPO / "docs/neurips_tex/figures/fig_l4_gpt51_byrootcause.pdf"
+    out_paper = REPO / "docs/paper_tex/figures/fig_l4_gpt51_byrootcause.pdf"
     fig.savefig(out_paper, bbox_inches="tight")
     print(f"saved {out_paper}")
 
