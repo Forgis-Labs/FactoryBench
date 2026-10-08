@@ -8,6 +8,17 @@ from huggingface_hub import hf_hub_download
 
 from .types import AnswerFormat, Item
 
+# KNOWN ISSUE (2026-10-08): the loader below requests
+#   factorybench_qa/level_{n}/{split}.jsonl
+# and that path 404s. The released dataset is flat -- factorybench_qa/
+# level_{n}.jsonl -- with no train/validation/test split; that partition was
+# retired upstream. load_split() therefore fails against both this repo and
+# Forgis/FactoryBench, whose contents are byte-identical.
+#
+# Fixing it means deciding what `split=` should mean now, so it is left as a
+# deliberate decision rather than a silent rewrite. REPO_ID stays on the
+# review mirror until then, because moving it would not make the loader work
+# and would only change which repo the 404 comes from.
 REPO_ID = "FactoryBench/FactoryBench"
 REPO_TYPE = "dataset"
 VALID_LEVELS = (1, 2, 3, 4)

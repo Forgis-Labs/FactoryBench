@@ -50,7 +50,7 @@ Homepage = "https://github.com/Forgis-Labs/FactoryBench"
 Source = "https://github.com/Forgis-Labs/FactoryBench"
 Issues = "https://github.com/Forgis-Labs/FactoryBench/issues"
 Changelog = "https://github.com/Forgis-Labs/FactoryBench/blob/main/CHANGELOG.md"
-Dataset = "https://huggingface.co/datasets/FactoryBench/FactoryBench"
+Dataset = "https://huggingface.co/datasets/Forgis/FactoryBench"
 
 [project.optional-dependencies]
 openai = ["openai>=1.43"]

@@ -4,10 +4,13 @@
 [![license](https://img.shields.io/badge/license-CC_BY--NC--SA_4.0-lightgrey.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
+> **Oral at the Physical Understanding for Decision-Making (PUDM) workshop,
+> NeurIPS 2026.**
+
 Python library and CLI for evaluating language models on the **FactoryBench**
 benchmark of industrial-machine reasoning across four causal levels
 (state / intervention / counterfactual / decision). Dataset:
-[`FactoryBench/FactoryBench`](https://huggingface.co/datasets/FactoryBench/FactoryBench)
+[`Forgis/FactoryBench`](https://huggingface.co/datasets/Forgis/FactoryBench)
 on the Hugging Face Hub.
 
 What's included: dataset loader, prompt renderer, deterministic scorer for
