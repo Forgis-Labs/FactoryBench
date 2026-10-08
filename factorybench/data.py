@@ -2,27 +2,21 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import Iterable
 
 from huggingface_hub import hf_hub_download
 
 from .types import AnswerFormat, Item
 
-# KNOWN ISSUE (2026-10-08): the loader below requests
-#   factorybench_qa/level_{n}/{split}.jsonl
-# and that path 404s. The released dataset is flat -- factorybench_qa/
-# level_{n}.jsonl -- with no train/validation/test split; that partition was
-# retired upstream. load_split() therefore fails against both this repo and
-# Forgis/FactoryBench, whose contents are byte-identical.
-#
-# Fixing it means deciding what `split=` should mean now, so it is left as a
-# deliberate decision rather than a silent rewrite. REPO_ID stays on the
-# review mirror until then, because moving it would not make the loader work
-# and would only change which repo the 404 comes from.
-REPO_ID = "FactoryBench/FactoryBench"
+REPO_ID = "Forgis/FactoryBench"
 REPO_TYPE = "dataset"
 VALID_LEVELS = (1, 2, 3, 4)
-VALID_SPLITS = ("train", "validation", "test")
+# The dataset is one flat file per level. The train/validation/test
+# partition was retired upstream, so these names are accepted only for
+# backward compatibility and all resolve to the full level.
+RETIRED_SPLITS = ("train", "validation", "test")
+VALID_SPLITS = RETIRED_SPLITS
 # Number of items to take from each level for the deterministic mini split.
 MINI_PER_LEVEL = 50
 
@@ -78,14 +72,13 @@ def _row_to_item(row: dict) -> Item:
     )
 
 
-def _download_level_split(level: int, split: str, revision: str | None) -> str:
+def _download_level(level: int, revision: str | None) -> str:
+    """Download one level's JSONL. One flat file per level; there are no splits."""
     if level not in VALID_LEVELS:
         raise ValueError(f"level must be one of {VALID_LEVELS}, got {level!r}")
-    if split not in VALID_SPLITS:
-        raise ValueError(f"split must be one of {VALID_SPLITS}, got {split!r}")
     return hf_hub_download(
         repo_id=REPO_ID,
-        filename=f"factorybench_qa/level_{level}/{split}.jsonl",
+        filename=f"factorybench_qa/level_{level}.jsonl",
         repo_type=REPO_TYPE,
         revision=revision,
     )
@@ -110,8 +103,11 @@ def load_split(
     Args:
         level: A level number (1..4), the string ``"L1".."L4"``, ``"all"``,
             or an iterable of those.
-        split: ``"test"`` (default), ``"validation"``, ``"train"``, or ``"mini"``
-            (first ``MINI_PER_LEVEL`` items of the test split per level).
+        split: ``"mini"`` for the first ``MINI_PER_LEVEL`` items per level, or
+            ``None`` for the whole level. ``"train"``/``"validation"``/``"test"``
+            are accepted for backward compatibility and return the whole level
+            with a ``DeprecationWarning``: the dataset no longer ships a
+            train/validation/test partition.
         revision: Optional git revision / tag of the dataset repo.
         max_items: Optional per-level cap.
     """
@@ -119,14 +115,23 @@ def load_split(
 
     if split == "mini":
         per_level_cap = MINI_PER_LEVEL if max_items is None else min(MINI_PER_LEVEL, max_items)
-        backing_split = "test"
     else:
+        if split in RETIRED_SPLITS:
+            # Do not do this quietly: a caller asking for "test" and silently
+            # receiving the whole level would get a surprise bill on a paid API.
+            warnings.warn(
+                f"split={split!r} is retired: FactoryBench no longer ships a "
+                "train/validation/test partition, so the full level is returned. "
+                "Pass max_items= to cap it, or split='mini' for a small sample.",
+                DeprecationWarning, stacklevel=2)
+        elif split is not None:
+            raise ValueError(
+                f"split must be 'mini', None, or one of {RETIRED_SPLITS}, got {split!r}")
         per_level_cap = max_items
-        backing_split = split
 
     items: list[Item] = []
     for lvl in levels:
-        path = _download_level_split(lvl, backing_split, revision)
+        path = _download_level(lvl, revision)
         for i, row in enumerate(_read_jsonl(path)):
             if per_level_cap is not None and i >= per_level_cap:
                 break
